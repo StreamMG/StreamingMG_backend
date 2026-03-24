@@ -51,6 +51,16 @@ npm run dev
 ```
 L'API écoutera par défaut sur `http://localhost:3001/api`.
 
+### 5. Peupler la base de données (Seeding)
+Pour tester rapidement la plateforme avec des utilisateurs existants (Admin, Fournisseur) ou du contenu :
+```bash
+# Générer les utilisateurs système par défaut (admin@streammg.mg / provider@streammg.mg)
+node scripts/seed_test_users.js
+
+# Optionnel : Alimenter le catalogue avec des contenus factices
+node scripts/seed.js
+```
+
 ---
 
 ## 📚 Documentations Internes
@@ -72,13 +82,3 @@ node scripts/test_complet.js
 ```
 *Le test utilise des fichiers factices (`dummy files`) pour simuler un upload lourd de manière instantanée.*
 
----
-
-## 🛡️ Architecture & Conformité S1-S10
-*(Construit sur l'architecture `@[user_global]` par "Membre 3")*
-
-Ce projet backend respecte à 100% les 12 RÈGLES CRITIQUES :
-- Pas de clé `sk_live_` (Mode Test Stripe).
-- Vignette de contenu obligatoire en base (`thumbnail`).
-- Isolation : Jamais de route directe vers `/private/`.
-- Clés de chiffrement AES dynamiques et volatiles en mémoire.
