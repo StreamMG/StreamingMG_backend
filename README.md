@@ -51,6 +51,16 @@ npm run dev
 ```
 L'API écoutera par défaut sur `http://localhost:3001/api`.
 
+### 5. Peupler la base de données (Seeding)
+Pour tester rapidement la plateforme avec des utilisateurs existants (Admin, Fournisseur) ou du contenu :
+```bash
+# Générer les utilisateurs système par défaut (admin@streammg.mg / provider@streammg.mg)
+node scripts/seed_test_users.js
+
+# Optionnel : Alimenter le catalogue avec des contenus factices
+node scripts/seed.js
+```
+
 ---
 
 ## 📚 Documentations Internes
