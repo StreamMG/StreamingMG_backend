@@ -359,7 +359,7 @@ async function runTests() {
   // (Exécuter: node scripts/seed_test_users.js AVANT ce test)
   try {
     const r = await request('POST', '/api/auth/login', {
-      email: 'provider_test@streammg.mg', password: 'ProvTest123!'
+      email: 'provider@test.com', password: 'password123'
     });
     PROVIDER_TOKEN = r.body?.token;
     if (PROVIDER_TOKEN) console.log('   ✅ Provider connecté');
@@ -370,7 +370,7 @@ async function runTests() {
 
   try {
     const r = await request('POST', '/api/auth/login', {
-      email: 'admin_test@streammg.mg', password: 'AdminTest123!'
+      email: 'admin@test.com', password: 'password123'
     });
     ADMIN_TOKEN = r.body?.token;
     if (ADMIN_TOKEN) console.log('   ✅ Admin connecté');

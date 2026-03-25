@@ -1,6 +1,6 @@
 # 📊 Rapport de Tests Complet — StreamMG Backend
 
-**Date :** 2026-03-24T08:08:59.273Z
+**Date :** 2026-03-24T15:59:51.507Z
 **Référence :** `@user_global` — RÈGLES 01–12
 **Résultat :** **32/32** tests réussis — **0** échoués
 
@@ -26,7 +26,7 @@
 | T16 | User standard → route admin | isAdmin.middleware | status=403 | status=403 | ✅ | isAdmin.middleware.js bloque les utilisateurs non-admin. |
 | T17 | User standard → route provider | isProvider.middleware | status=403 | status=403 | ✅ | isProvider.middleware.js bloque les utilisateurs non-provider. |
 | T18 | Upload SANS thumbnail → 400 | RÈGLE-03 | status=400, field=thumbnail | status=400 | ✅ | RÈGLE-03 : thumbnailCheck.middleware.js retourne 400 AVANT toute autre opération |
-| T19 | Upload AVEC thumbnail + media | RÈGLE-03/04 | status=201, contentId retourné | status=201, contentId=69c2469997a9b694c27ea631 | ✅ | RÈGLE-04 : thumbnail required:true dans Content.model.js, upload réussi avec Mul |
+| T19 | Upload AVEC thumbnail + media | RÈGLE-03/04 | status=201, contentId retourné | status=201, contentId=69c2b4f6d89cee4957a04b9b | ✅ | RÈGLE-04 : thumbnail required:true dans Content.model.js, upload réussi avec Mul |
 | T20 | Upload Audio MP3 (musicMetadata) | TÂCHE 3.1/ffmpeg | status=201, type=audio | status=201 | ✅ | music-metadata extrait ID3 (artiste, album, durée). Stockage dans /uploads/audio |
 | T21 | Admin — liste contenus | TÂCHE admin | status=200 | status=200 | ✅ | Route admin protégée par isAdmin middleware → accès autorisé. |
 | T22 | Admin — stats | TÂCHE admin | status=200 | status=200 | ✅ | Statistiques dashboard admin (revenus, utilisateurs, contenus). |
