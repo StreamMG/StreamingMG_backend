@@ -29,8 +29,12 @@ const app = express();
 app.use(
   helmet({
     contentSecurityPolicy: {
-      directives: { defaultSrc: ["'self'"] },
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "data:", "blob:", "http:", "https:"],
+      },
     },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     hsts: { maxAge: 31536000 },
   }),
 );

@@ -12,12 +12,15 @@ const hlsTokenMiddleware = require('../middlewares/hlsTokenizer.middleware');
 router.use(hlsTokenMiddleware);
 
 // Servir les fichiers statiques HLS (manifest + segments)
-router.use(
-  express.static(path.join(__dirname, '../uploads/hls'), {
-    // Empêcher le listing des répertoires
+// Utilise le contentId des paramètres pour cibler le bon dossier
+router.use((req, res, next) => {
+  const { contentId } = req.params;
+  const hlsPath = path.join(__dirname, '../uploads/hls', contentId);
+  
+  express.static(hlsPath, {
     dotfiles: 'deny',
     index: false
-  })
-);
+  })(req, res, next);
+});
 
 module.exports = router;
