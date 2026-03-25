@@ -23,14 +23,12 @@ const requestDownload = async (req, res, next) => {
       return res.status(404).json({ message: 'Contenu introuvable' });
     }
 
-    // Déterminer le fichier source à signer
+    // Déterminer le fichier source à signer (Doit correspondre au middleware validateSignedUrl)
     let filePath;
     if (content.type === 'audio' && content.audioPath) {
-      // Audio : chemin relatif depuis /uploads/audio/
-      filePath = `uploads/audio/${path.basename(content.audioPath)}`;
+      filePath = `src/uploads/audio/${path.basename(content.audioPath)}`;
     } else {
-      // Vidéo : fichier source dans /uploads/private/
-      filePath = `uploads/private/${contentId}_src.mp4`;
+      filePath = `src/uploads/private/${contentId}_src.mp4`;
     }
 
     // ── Générer clé AES-256 et IV ──────────────────────────
@@ -39,7 +37,7 @@ const requestDownload = async (req, res, next) => {
     const iv     = generateIv();      // 16 octets = 128 bits
 
     // ── Signer l'URL temporaire (15 min) ──────────────────
-    const { signedUrl, expiry } = signDownloadUrl(contentId, filePath);
+    const { signedUrl, expiry } = signDownloadUrl(filePath, contentId);
 
     // TF-AES-01 : aesKeyHex = 64 chars, ivHex = 32 chars
     return res.json({
@@ -61,23 +59,19 @@ const requestDownload = async (req, res, next) => {
 const servePrivateFile = async (req, res, next) => {
   try {
     const { contentId } = req.params;
+    const filePath = req.resolvedFilePath; // Fourni par le middleware validateSignedUrl
 
-    const content = await Content.findById(contentId).select('type audioPath');
-
-    if (!content) {
-      return res.status(404).json({ message: 'Contenu introuvable' });
+    if (!filePath) {
+      return res.status(404).json({ message: 'Fichier non résolu' });
     }
 
-    let absolutePath;
-    if (content.type === 'audio' && content.audioPath) {
-      absolutePath = path.join(__dirname, '..', content.audioPath);
-    } else {
-      absolutePath = path.join(__dirname, `../uploads/private/${contentId}_src.mp4`);
-    }
+    const absolutePath = path.join(__dirname, '../../', filePath);
 
     if (!fs.existsSync(absolutePath)) {
-      return res.status(404).json({ message: 'Fichier source introuvable' });
+      return res.status(404).json({ message: 'Fichier source introuvable sur le disque' });
     }
+
+    const content = await Content.findById(contentId).select('type');
 
     // Servir en streaming (supporte les reprises réseau)
     const stat   = fs.statSync(absolutePath);
