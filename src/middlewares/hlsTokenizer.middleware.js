@@ -6,7 +6,9 @@
 const { verifyHlsToken, generateFingerprint } = require('../utils/crypto.utils');
 
 module.exports = (req, res, next) => {
-  const token = req.query.token;
+  const contentId = req.params.contentId || req.originalUrl.split('/hls/')[1]?.split('/')[0];
+  const token = req.query.token || (req.cookies && req.cookies[`hlsToken_${contentId}`]);
+  
   if (!token)
     return res.status(403).json({ message: 'Token HLS manquant', code: 'HLS_TOKEN_MISSING' });
 

@@ -33,12 +33,8 @@ export default function VideoPlayer() {
         // 3. Initialiser le lecteur avec le manifest URL (qui contient ?token=...)
         if (Hls.isSupported()) {
           hls = new Hls({
-            xhrSetup: (xhr, url) => {
-              // hls.js a déjà fait un xhr.open(). On le refait avec le token pour les segments (.ts)
-              if (url.includes('.ts') && !url.includes('token=')) {
-                xhr.open('GET', `${url}?token=${tokenStr}`, true);
-              }
-              xhr.withCredentials = true; // Pour transférer cookie sessionId (fingerprint)
+            xhrSetup: (xhr) => {
+              xhr.withCredentials = true; // Permet l'envoi du cookie hlsToken et sessionId
             }
           });
           
@@ -73,7 +69,19 @@ export default function VideoPlayer() {
 
       } catch (err) {
         console.error("Erreur de lecteur", err);
-        setError(err.response?.data?.message || err.message || "Impossible de lire la vidéo");
+        const data = err.response?.data;
+        let errMsg = data?.message || err.message || "Impossible de lire la vidéo";
+        
+        // Formater les raisons de refus d'accès personnalisées (RÈGLE-05)
+        if (data?.reason === 'purchase_required') {
+          errMsg = `Ce contenu est payant (${data.price} Ar). Vous devez l'acheter séparément, votre abonnement Premium ne le couvre pas.`;
+        } else if (data?.reason === 'subscription_required') {
+          errMsg = "Accès Premium requis. Vous devez vous abonner pour visionner cette vidéo.";
+        } else if (data?.reason === 'login_required') {
+          errMsg = "Connexion requise pour accéder à cette vidéo.";
+        }
+
+        setError(errMsg);
       } finally {
         setLoading(false);
       }
