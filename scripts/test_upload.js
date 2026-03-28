@@ -3,105 +3,141 @@ const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'http://localhost:3001/api';
+// Configuration - Utilisez 127.0.0.1 pour éviter les délais DNS de localhost sur Windows
+const BASE_URL = 'http://127.0.0.1:3001/api'; 
 const EMAIL = 'provider@test.com';
 const PASSWORD = 'password123';
 
-const SOURCE_DIR = '/media/tsiky-ny-antsa/PROJET/streamMG-backend/TestContenu';
+// Chemins absolus Windows
+const SOURCE_DIR = "D:\\StreamingMG_backend\\TestContenu\\ClipAudio";
 const THUMBNAIL_PATH = path.join(__dirname, '../uploads/thumbnails/test-video.jpg');
 
 const testCases = [
   {
-    name: 'Test Audio (Extraction Métadonnées)',
-    file: path.join(SOURCE_DIR, 'Mp3/Revirevinay taloha.mp3'),
+    name: 'Afindrafindrao (Salegy/Piano)',
+    filename: 'Afindrafindrao-Piano malagasy.mp4',
     meta: {
-      title: 'Revirevinay taloha',
-      type: 'audio',
-      category: 'podcast',
-      description:'azezrzlejflkefjl'
-    }
-  },
-  {
-    name: 'Test Clip Vidéo (HLS lent)',
-    file: path.join(SOURCE_DIR, 'ClipAudio/NF - FEAR.mp4'),
-    meta: {
-      title: 'NF - FEAR',
-      type: 'video',
+      title: 'Afindrafindrao - Piano',
       category: 'salegy',
-      description:'azezrzlejflkefjl'
+      description: 'Test upload piano malagasy'
     }
   },
   {
-    name: 'Test Film (Gros fichier)',
-    file: path.join(SOURCE_DIR, 'ClipAudio/Lewis Capaldi - Someone You Loved.mp4'),
+    name: 'AGRAD (Film/Gros fichier)',
+    filename: 'AGRAD   ZANAKI DADANAY Officiel video 4K _1080pFHR.mp4',
     meta: {
-      title: 'Lewis Movie',
-      type: 'video',
+      title: 'AGRAD - Zanaki Dadanay',
       category: 'film',
-      description:'azezrzlejflkefjl'
+      description: 'Test upload gros fichier 4K'
     }
   },
   {
-    name: 'Test Tutoriel (Option isTutorial)',
-    file: path.join(SOURCE_DIR, "ClipAudio/John Legend - All of Me (Official Video).mp4"),
+    name: 'AmbondronA (Tutoriel - Tomany)',
+    filename: 'AmbondronA      Tomany irery Official video_1080p.mp4',
     meta: {
-      title: 'Tuto Qt - Chap 1',
-      type: 'video',
+      title: 'Tuto Rock - Chap 1',
       category: 'tutoriel',
       isTutorial: 'true',
-      description:'azezrzlejflkefjl'
+      description: 'Apprendre le rock malagasy'
+    }
+  },
+  {
+    name: 'AmbondronA (Tutoriel - Aza ela)',
+    filename: 'AmbondronA  Aza ela any official video_1080p.mp4',
+    meta: {
+      title: 'Tuto Rock - Chap 2',
+      category: 'tutoriel',
+      isTutorial: 'true',
+      description: 'Suite du cours de rock'
+    }
+  },
+  {
+    name: 'Ho avy ilay malala (Salegy)',
+    filename: '_ho avy ilay malala _ Andrianary Ratianarivo par Mirana Madagascar etAndry Raharifera(360P).mp4',
+    meta: {
+      title: 'Ho avy ilay malala',
+      category: 'salegy',
+      description: 'Variété malagasy test'
     }
   }
 ];
 
 async function run() {
-  console.log('=== DÉBUT DU TEST RÉEL ===');
+  console.log('🚀 === DÉBUT DE L\'UPLOAD DE TEST (MODE PUBLIC) ===');
+  
   try {
-    // 1. Login
-    const loginRes = await axios.post(`${BASE_URL}/auth/login`, { email: EMAIL, password: PASSWORD });
+    // 1. Authentification pour obtenir le Token
+    console.log('🔐 Tentative de connexion...');
+    const loginRes = await axios.post(`${BASE_URL}/auth/login`, { 
+      email: EMAIL, 
+      password: PASSWORD 
+    });
+    
     const token = loginRes.data.token;
-    console.log('✅ Auth Réussie, token obtenu.');
+    console.log('✅ Authentification réussie.\n');
 
     for (const t of testCases) {
-      console.log(`\n⏳ Exécution: ${t.name}`);
-      console.log(`   Source: ${t.file}`);
-      
-      if (!fs.existsSync(t.file)) {
-        console.log(`❌ Fichier introuvable, test ignoré.`);
+      const filePath = path.join(SOURCE_DIR, t.filename);
+      console.log(`--------------------------------------------------`);
+      console.log(`📦 Traitement : ${t.name}`);
+
+      // Vérification physique du fichier
+      if (!fs.existsSync(filePath)) {
+        console.log(`❌ ERREUR : Fichier introuvable sur le disque.`);
+        console.log(`   Chemin testé : ${filePath}`);
         continue;
       }
 
+      // Calcul de la taille réelle pour la base de données
+      const stats = fs.statSync(filePath);
+      const fileSize = stats.size;
+
       const form = new FormData();
       form.append('title', t.meta.title);
-      form.append('type', t.meta.type);
+      form.append('type', 'video');
       form.append('category', t.meta.category);
-      form.append('description', t.meta.description || 'Description test');
-      if (t.meta.isTutorial) form.append('isTutorial', t.meta.isTutorial);
+      form.append('description', t.meta.description);
+      form.append('isPublished', 'true'); // On force la publication dès l'upload
+      form.append('fileSize', fileSize.toString());
       
-      // Mandatory thumbnail
+      if (t.meta.isTutorial) {
+        form.append('isTutorial', 'true');
+      }
+
+      // Streams de fichiers
       form.append('thumbnail', fs.createReadStream(THUMBNAIL_PATH));
-      // Media
-      form.append('media', fs.createReadStream(t.file));
+      form.append('media', fs.createReadStream(filePath));
 
       try {
-        const start = Date.now();
-        const res = await axios.post(`${BASE_URL}/provider/contents`, form, {
+        const startTime = Date.now();
+        const response = await axios.post(`${BASE_URL}/provider/contents`, form, {
           headers: {
             ...form.getHeaders(),
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`
           },
+          maxContentLength: Infinity,
           maxBodyLength: Infinity,
-          maxContentLength: Infinity
+          // Timeout long pour les gros fichiers
+          timeout: 600000 
         });
-        const elapsed = Date.now() - start;
-        console.log(`   ✅ Succès en ${elapsed}ms -> contentId: ${res.data.contentId}`);
-      } catch (e) {
-        console.log(`   ❌ Erreur API: ${e.response?.data?.message || e.message}`);
+
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`✅ Succès ! ID: ${response.data.contentId} (${duration}s)`);
+        console.log(`📊 Taille : ${(fileSize / (1024 * 1024)).toFixed(2)} MB`);
+
+      } catch (uploadError) {
+        const errorMsg = uploadError.response?.data?.message || uploadError.message;
+        console.log(`❌ Erreur API lors de l'upload : ${errorMsg}`);
       }
     }
-    console.log('\n=== FIN DU TEST ===');
-  } catch (err) {
-    console.error('Erreur Critique:', err.message);
+
+    console.log(`\n==================================================`);
+    console.log(`🏁 FIN DES TESTS. Vérifiez votre Dashboard Front-end.`);
+    console.log(`==================================================`);
+
+  } catch (authError) {
+    console.error('💥 ERREUR CRITIQUE (Auth) :', authError.response?.data || authError.message);
+    console.log('\nCONSEIL : Vérifiez que votre serveur Node (Express) est bien lancé sur le port 3001.');
   }
 }
 
