@@ -1,16 +1,33 @@
-# React + Vite
+# 🎬 StreamMG — Prototype React HLS Player
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ce dossier contient une application web légère React / Vite dédiée **exclusivement au test sécurisé du pipeline vidéo HLS** du backend StreamMG.
 
-Currently, two official plugins are available:
+## 🚀 Démarrage Rapide
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Assurez-vous que le backend `streamMG-backend` tourne en arrière-plan (`npm run dev` à la racine).
+2. Installez les dépendances du frontend :
+   ```bash
+   cd client-prototype
+   npm install
+   ```
+3. Lancez le serveur de développement (accessible sur le réseau local) :
+   ```bash
+   npm run dev -- --host
+   ```
+4. Ouvrez `http://192.168.0.37:5175` ou `http://localhost:5175`.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛡️ Architecture & Sécurité Validées
 
-## Expanding the ESLint configuration
+Ce lecteur est volontairement dépouillé pour se concentrer sur **la validation des contraintes de sécurité (Rule-05 et Anti-Pirate)** :
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Tokenisation Cookie (HLSTokenizer)** : Le lecteur demande l'accès au catalogue via `/api/hls/:id/token`. L'API répond par un *HTTP-Only Cookie* indécodable par un attaquant côté client, ce qui permet à `hls.js` de lire la vidéo en respectant le `Fingerprint` (IP + User-Agent).
+- **RÈGLE-05 Appliquée** : Un utilisateur `Premium` dispose du droit absolu sur les vidéos gratuites et premium. S'il tente d'ouvrir une Masterclass `Paid` sans l'avoir achetée, la protection bloque l'accès (`403 purchase_required`) et le lecteur l'en avertit proprement.
+- **Anti-Aspirateur (IDM)** : Toute tentative de téléchargement parallèle massif des fragments `.ts` par IDM est bloquée (via le Rate Limiter à 30 req/minute). Le lecteur HLS web, lui, charge posément les blocs toutes les 5 secondes sans jamais accrocher le filtre anti-hack.
+
+## 📁 Fichiers d'Intérêt
+
+- `src/pages/VideoPlayer.jsx` : L'implémentation robuste de `hls.js`, avec injection de `xhr.withCredentials` afin de transférer automatiquement le Cookie HLS émis par le backend.
+- `src/api.js` : Client Axios gérant la rafraîchissement transparent du Token d'authentification tous les 15 minutes.
+- `.env` : Paramètres réseaux pour brancher dynamiquement le front sur l'IP du serveur sans erreur CORS.
