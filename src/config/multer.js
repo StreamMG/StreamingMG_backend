@@ -16,7 +16,7 @@ const ensureDir = (dir) => {
 // ── Storage thumbnail ──
 const thumbnailStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = path.join(__dirname, '../uploads/thumbnails');
+    const dir = path.join(__dirname, '../../uploads/thumbnails');
     ensureDir(dir);
     cb(null, dir);
   },
@@ -37,9 +37,9 @@ const mediaStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     let dir;
     if (file.mimetype.startsWith('video/')) {
-      dir = path.join(__dirname, '../uploads/private');
+      dir = path.join(__dirname, '../../uploads/private');
     } else {
-      dir = path.join(__dirname, '../uploads/audio');
+      dir = path.join(__dirname, '../../uploads/audio');
     }
     ensureDir(dir);
     cb(null, dir);
@@ -74,11 +74,11 @@ const uploadContent = multer({
     destination: (req, file, cb) => {
       let dir;
       if (file.fieldname === 'thumbnail') {
-        dir = path.join(__dirname, '../uploads/thumbnails');
+        dir = path.join(__dirname, '../../uploads/thumbnails');
       } else if (file.mimetype.startsWith('video/')) {
-        dir = path.join(__dirname, '../uploads/private');
+        dir = path.join(__dirname, '../../uploads/private');
       } else {
-        dir = path.join(__dirname, '../uploads/audio');
+        dir = path.join(__dirname, '../../uploads/audio');
       }
       ensureDir(dir);
       cb(null, dir);

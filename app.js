@@ -40,15 +40,22 @@ app.use(
 );
 
 // ── CORS ──
-const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS || "http://localhost:5173"
-).split(",");
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
 app.use(
   cors({
     origin: (origin, callback) => {
       // Autoriser les requêtes sans origin (Postman, mobile)
-      if (!origin || allowedOrigins.includes(origin))
+      if (!origin) return callback(null, true);
+      
+      // Nettoyer l'origine (enlever le slash final)
+      const cleanOrigin = origin.replace(/\/$/, "");
+      
+      // Check si localhost ou inclus dans allowedOrigins
+      if (cleanOrigin.includes('localhost') || cleanOrigin.includes('127.0.0.1') || allowedOrigins.includes(cleanOrigin)) {
         return callback(null, true);
+      }
+      
+      console.warn('CORS Blocked:', origin);
       callback(new Error("CORS non autorisé"));
     },
     credentials: true,
@@ -83,11 +90,11 @@ app.use(cookieParser());
 // ── Fichiers statiques publics ──
 app.use(
   "/uploads/thumbnails",
-  express.static(path.join(__dirname, "/src/uploads/thumbnails")),
+  express.static(path.join(__dirname, "uploads/thumbnails")),
 );
 app.use(
   "/uploads/audio",
-  express.static(path.join(__dirname, "/src/uploads/audio")),
+  express.static(path.join(__dirname, "uploads/audio")),
 );
 
 // /uploads/hls → protégé par hlsTokenizer (dans les routes HLS)

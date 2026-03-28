@@ -20,7 +20,7 @@ const fs     = require('fs');
  */
 const transcodeToHls = (inputPath, contentId) => {
   return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, `../uploads/hls/${contentId}`);
+    const outputDir = path.join(__dirname, `../../uploads/hls/${contentId}`);
     fs.mkdirSync(outputDir, { recursive: true });
 
     const outputManifest = path.join(outputDir, 'index.m3u8');
@@ -76,7 +76,7 @@ const getVideoDuration = (inputPath) => {
  * @param {string} contentId
  */
 const deleteHlsFiles = (contentId) => {
-  const dir = path.join(__dirname, `../uploads/hls/${contentId}`);
+  const dir = path.join(__dirname, `../../uploads/hls/${contentId}`);
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
     console.log(`🗑️  HLS supprimé: ${contentId}`);
