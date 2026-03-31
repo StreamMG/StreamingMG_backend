@@ -10,21 +10,30 @@ module.exports = (req, res, next) => {
   if (!token)
     return res.status(403).json({ message: 'Token HLS manquant', code: 'HLS_TOKEN_MISSING' });
 
-  // Recalcule le fingerprint depuis la requête actuelle (UA + IP + sessionId)
-  const fp = generateFingerprint(
+  // Recalcule le fingerprint conforme au design (UA + IP + sessionId)
+  const currentFp = generateFingerprint(
     req.headers['user-agent'] || '',
     req.ip || '',
     req.cookies?.sessionId || ''
   );
 
-  const payload = verifyHlsToken(token, fp);
-  if (!payload)
-    return res.status(403).json({ message: 'Token HLS invalide ou expiré', code: 'HLS_TOKEN_INVALID' });
+  const payload = verifyHlsToken(token, currentFp);
+  
+  if (!payload) {
+    return res.status(403).json({ 
+      message: 'Token HLS invalide ou expiré', 
+      code: 'HLS_TOKEN_INVALID' 
+    });
+  }
 
   // Vérifie correspondance contentId URL ↔ token
-  const routeId = req.params.id || req.params.contentId;
-  if (routeId && payload.contentId !== routeId)
-    return res.status(403).json({ message: 'Token non applicable à ce contenu', code: 'HLS_TOKEN_MISMATCH' });
+  const routeId = req.params.contentId;
+  if (routeId && payload.contentId !== routeId) {
+    return res.status(403).json({ 
+      message: 'Token non applicable à ce contenu', 
+      code: 'HLS_TOKEN_MISMATCH' 
+    });
+  }
 
   req.hlsPayload = payload;
 

@@ -2,7 +2,7 @@
 //  controllers/hlsController.js — S4 : Génération token HLS
 //  GET /api/hls/:contentId/token → { hlsUrl, expiresIn: 600 }
 // ─────────────────────────────────────────────────────────────
-const { computeFingerprint, generateHlsToken } = require('../services/cryptoService');
+const { generateFingerprint, generateHlsToken } = require('../utils/crypto.utils');
 
 // ─────────────────────────────────────────────────────────────
 //  GET /api/hls/:contentId/token
@@ -12,10 +12,14 @@ const getHlsToken = async (req, res, next) => {
   try {
     const { contentId } = req.params;
 
-    // Calcul du fingerprint (UA + IP + sessionId)
-    const fingerprint = computeFingerprint(req);
+    // Calcul du fingerprint (UA + IP + sessionId) conforme au design
+    const fingerprint = generateFingerprint(
+      req.headers['user-agent'] || '',
+      req.ip || '',
+      req.cookies?.sessionId || ''
+    );
 
-    // Génère le token JWT HLS (10 min)
+    // Génère le token HMAC HLS conforme au design
     const token = generateHlsToken(
       contentId,
       req.user?.id || 'anonymous',

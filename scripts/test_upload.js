@@ -15,7 +15,7 @@ const THUMBNAIL_PATH = path.join(__dirname, '../uploads/thumbnails/test-video.jp
 const testCases = [
   {
     name: 'Afindrafindrao (Salegy/Piano)',
-    filename: 'Afindrafindrao-Piano malagasy.mp4',
+    filename: '1.mp4',
     meta: {
       title: 'Afindrafindrao - Piano',
       category: 'salegy',
@@ -24,7 +24,7 @@ const testCases = [
   },
   {
     name: 'AGRAD (Film/Gros fichier)',
-    filename: 'AGRAD   ZANAKI DADANAY Officiel video 4K _1080pFHR.mp4',
+    filename: '4.mp4',
     meta: {
       title: 'AGRAD - Zanaki Dadanay',
       category: 'film',
@@ -33,7 +33,7 @@ const testCases = [
   },
   {
     name: 'AmbondronA (Tutoriel - Tomany)',
-    filename: 'AmbondronA      Tomany irery Official video_1080p.mp4',
+    filename: '2.mp4',
     meta: {
       title: 'Tuto Rock - Chap 1',
       category: 'tutoriel',
@@ -43,7 +43,7 @@ const testCases = [
   },
   {
     name: 'AmbondronA (Tutoriel - Aza ela)',
-    filename: 'AmbondronA  Aza ela any official video_1080p.mp4',
+    filename: '3.mp4',
     meta: {
       title: 'Tuto Rock - Chap 2',
       category: 'tutoriel',
@@ -53,7 +53,7 @@ const testCases = [
   },
   {
     name: 'Ho avy ilay malala (Salegy)',
-    filename: '_ho avy ilay malala _ Andrianary Ratianarivo par Mirana Madagascar etAndry Raharifera(360P).mp4',
+    filename: '5.mp4',
     meta: {
       title: 'Ho avy ilay malala',
       category: 'salegy',

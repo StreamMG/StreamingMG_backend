@@ -29,6 +29,7 @@ const ContentSchema = new mongoose.Schema({
   // Fichiers
   filePath:    { type: String, default: null },
   hlsPath:     { type: String, default: null },
+  audioPath:   { type: String, default: null },
   fileSize:    { type: Number, default: 0 },
   mimeType:    { type: String, default: null },
   duration:    { type: Number, default: null },
