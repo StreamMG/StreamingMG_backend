@@ -44,8 +44,11 @@ const authOptional = (req, res, next) => {
 
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    req.user = null;  // Token invalide → pas bloquant
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expiré' });
+    }
+    req.user = null;  // Autre erreur → on assume anonyme
   }
   next();
 };

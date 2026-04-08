@@ -57,7 +57,7 @@ const uploadContent = async (req, res, next) => {
           const duration = await getVideoDuration(inputPath).catch(() => 0);
           await Content.findByIdAndUpdate(content._id, { hlsPath, duration });
           // Déplacer le fichier source vers /uploads/private/
-          const destPath = path.join(__dirname, `../uploads/private/${content._id}_src.mp4`);
+          const destPath = path.join(__dirname, `../../uploads/private/${content._id}_src.mp4`);
           fs.renameSync(inputPath, destPath);
         })
         .catch((err) => {
@@ -149,7 +149,7 @@ const replaceThumbnail = async (req, res, next) => {
 
     // Supprimer l'ancienne vignette
     if (content.thumbnail) {
-      const oldPath = path.join(__dirname, '..', content.thumbnail);
+      const oldPath = path.join(__dirname, '../..', content.thumbnail);
       if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
 
@@ -211,11 +211,11 @@ const deleteContent = async (req, res, next) => {
 
     // Nettoyer les fichiers
     if (content.thumbnail) {
-      const p = path.join(__dirname, '..', content.thumbnail);
+      const p = path.join(__dirname, '../..', content.thumbnail);
       if (fs.existsSync(p)) fs.unlinkSync(p);
     }
     if (content.audioPath) {
-      const p = path.join(__dirname, '..', content.audioPath);
+      const p = path.join(__dirname, '../..', content.audioPath);
       if (fs.existsSync(p)) fs.unlinkSync(p);
     }
     if (content.hlsPath) {

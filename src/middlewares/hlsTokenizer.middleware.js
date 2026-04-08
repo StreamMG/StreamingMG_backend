@@ -1,19 +1,9 @@
 const { verifyHlsToken, generateFingerprint } = require('../utils/crypto.utils');
 
 module.exports = (req, res, next) => {
-  // 1. EXTRACTION DU FICHIER DEMANDÉ
-  // On regarde si la requête finit par .ts
-  const isSegment = req.path.endsWith('.ts');
-
-  // 2. LOGIQUE DE TEST / EXCEPTION
-  if (isSegment) {
-    // On autorise les segments sans vérification de token pour le test
-    // (Ou on pourrait vérifier un cookie de session ici si disponible)
-    return next();
-  }
-
-  // 3. LOGIQUE ORIGINALE POUR LE MANIFEST (.m3u8)
-  const token = req.query.token;
+  const contentId = req.params.contentId || req.originalUrl.split('/hls/')[1]?.split('/')[0];
+  const token = req.query.token || (req.cookies && req.cookies[`hlsToken_${contentId}`]);
+  
   if (!token)
     return res.status(403).json({ message: 'Token HLS manquant', code: 'HLS_TOKEN_MISSING' });
 
