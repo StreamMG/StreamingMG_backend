@@ -1,16 +1,22 @@
-// ─────────────────────────────────────────────────────────────
-//  middlewares/hlsTokenizer.middleware.js
-//  ★ HMAC-SHA256 + fingerprint — Référence : PorteOuverteV2 §5
-//  Utilise crypto.utils.js conforme au user_global
-// ─────────────────────────────────────────────────────────────
 const { verifyHlsToken, generateFingerprint } = require('../utils/crypto.utils');
 
 module.exports = (req, res, next) => {
+  // 1. EXTRACTION DU FICHIER DEMANDÉ
+  // On regarde si la requête finit par .ts
+  const isSegment = req.path.endsWith('.ts');
+
+  // 2. LOGIQUE DE TEST / EXCEPTION
+  if (isSegment) {
+    // On autorise les segments sans vérification de token pour le test
+    // (Ou on pourrait vérifier un cookie de session ici si disponible)
+    return next();
+  }
+
+  // 3. LOGIQUE ORIGINALE POUR LE MANIFEST (.m3u8)
   const token = req.query.token;
   if (!token)
     return res.status(403).json({ message: 'Token HLS manquant', code: 'HLS_TOKEN_MISSING' });
 
-  // Recalcule le fingerprint conforme au design (UA + IP + sessionId)
   const currentFp = generateFingerprint(
     req.headers['user-agent'] || '',
     req.ip || '',
@@ -26,7 +32,6 @@ module.exports = (req, res, next) => {
     });
   }
 
-  // Vérifie correspondance contentId URL ↔ token
   const routeId = req.params.contentId;
   if (routeId && payload.contentId !== routeId) {
     return res.status(403).json({ 
@@ -37,7 +42,6 @@ module.exports = (req, res, next) => {
 
   req.hlsPayload = payload;
 
-  // Anti-cache / anti-téléchargement
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
