@@ -118,7 +118,8 @@ export default function VideoPlayer() {
         ) : (
           <video 
             ref={videoRef}
-            controls 
+            audio
+            controls
             autoPlay 
             style={{ width: '100%', height: '100%' }}
             poster={content && `${import.meta.env.VITE_BASE_URL}${content.thumbnail}`}

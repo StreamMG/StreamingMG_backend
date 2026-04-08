@@ -65,7 +65,7 @@ app.use(
 // ── Rate limiting ──
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 100000000000000,
   message: { message: "Trop de tentatives. Réessayez dans 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
