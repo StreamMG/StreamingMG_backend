@@ -5,6 +5,7 @@
 const ffmpeg = require('fluent-ffmpeg');
 const path   = require('path');
 const fs     = require('fs');
+const logger = require('../utils/logger');
 
 /**
  * Transcode un fichier MP4 en flux HLS (segments .ts de 10s)
@@ -26,6 +27,7 @@ const transcodeToHls = (inputPath, contentId) => {
     const outputManifest = path.join(outputDir, 'index.m3u8');
 
     ffmpeg(inputPath)
+      .renice(10)
       .outputOptions([
         '-codec: copy',      // Pas de re-encodage → rapide
         '-start_number 0',
@@ -36,19 +38,19 @@ const transcodeToHls = (inputPath, contentId) => {
       ])
       .output(outputManifest)
       .on('start', (cmd) => {
-        console.log(`🎬 Transcoding démarré: ${contentId}`);
+        logger.info(`🎬 Transcoding démarré: ${contentId}`);
       })
       .on('progress', (progress) => {
-        if (progress.percent) {
-          process.stdout.write(`\r   Progression: ${Math.round(progress.percent)}%`);
+        if (progress.percent && Math.round(progress.percent) % 10 === 0) {
+           // Reduce log frequency to avoid spamming Winston transports
         }
       })
       .on('end', () => {
-        console.log(`\n✅ HLS transcoding terminé: ${contentId}`);
+        logger.info(`✅ HLS transcoding terminé: ${contentId}`);
         resolve(`/hls/${contentId}/index.m3u8`);
       })
       .on('error', (err) => {
-        console.error(`\n❌ ffmpeg error [${contentId}]:`, err.message);
+        logger.error(`❌ ffmpeg error [${contentId}]: ${err.message}`);
         reject(err);
       })
       .run();
@@ -79,7 +81,7 @@ const deleteHlsFiles = (contentId) => {
   const dir = path.join(__dirname, `../../uploads/hls/${contentId}`);
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
-    console.log(`🗑️  HLS supprimé: ${contentId}`);
+    logger.info(`🗑️ HLS supprimé: ${contentId}`);
   }
 };
 

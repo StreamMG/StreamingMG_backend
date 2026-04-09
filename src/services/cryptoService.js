@@ -59,8 +59,9 @@ const signDownloadUrl = (filePath, contentId) => {
     .createHmac('sha256', process.env.SIGNED_URL_SECRET)
     .update(`${filePath}|${expiry}`)
     .digest('hex');
+  const baseUrl = (process.env.BASE_URL || 'http://localhost:3001').split(',')[0];
   const signedUrl =
-    `${process.env.BASE_URL || 'http://localhost:3001'}/private/${contentId}` +
+    `${baseUrl}/private/${contentId}` +
     `?expires=${expiry}&sig=${signature}`;
   return { signedUrl, expiry };
 };
