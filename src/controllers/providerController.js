@@ -6,6 +6,7 @@ const path    = require('path');
 const fs      = require('fs');
 const Content = require('../models/Content.model');
 const { transcodeToHls, getVideoDuration, deleteHlsFiles } = require('../services/ffmpegService');
+const logger  = require('../utils/logger');
 
 // ─────────────────────────────────────────────────────────────
 //  POST /api/provider/contents — Upload contenu
@@ -61,7 +62,7 @@ const uploadContent = async (req, res, next) => {
           fs.renameSync(inputPath, destPath);
         })
         .catch((err) => {
-          console.error(`❌ Transcoding failed [${content._id}]:`, err.message);
+          logger.error(`❌ Transcoding échoué [${content._id}]: ${err.message}`);
           Content.findByIdAndUpdate(content._id, { isPublished: false }).catch(() => {});
         });
 
