@@ -6,6 +6,7 @@
 const router  = require('express').Router({ mergeParams: true });
 const express = require('express');
 const path    = require('path');
+const fs      = require('fs');
 const hlsTokenMiddleware = require('../middlewares/hlsTokenizer.middleware');
 const rateLimit = require('express-rate-limit');
 
@@ -28,6 +29,29 @@ router.use(hlsTokenMiddleware);
 
 // Appliquer le filtre anti-aspiration sur cette sous-route
 router.use(antiAspirationLimiter);
+
+// ── Règle Hybride : Intercepteur Mobile pour le Manifest ── 
+// Permet de réécrire le manifeste dynamiquement pour apposer le Token sur tous les segments .ts (Expo-AV)
+router.get('/index.m3u8', async (req, res, next) => {
+  // Si ce n'est pas un lecteur Mobile, on ignore l'interception et le fichier est servi tel quel par express.static
+  if (req.hlsPayload?.p !== 'mobile') return next();
+
+  const { contentId } = req.params;
+  const filePath = path.join(__dirname, '../../uploads/hls', contentId, 'index.m3u8');
+  
+  try {
+    const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    const token = req.query.token || (req.cookies && req.cookies[`hlsToken_${contentId}`]);
+    
+    // Injecte ?token=xyz sur toutes les lignes pointant vers un segment .ts
+    const signedManifest = fileContent.replace(/(\.ts)/g, `.ts?token=${token}`);
+    
+    res.set('Content-Type', 'application/vnd.apple.mpegurl');
+    res.send(signedManifest);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Servir les fichiers statiques HLS (manifest + segments)
 // Utilise le contentId des paramètres pour cibler le bon dossier

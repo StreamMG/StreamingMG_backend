@@ -38,7 +38,13 @@ const errorHandler = (err, req, res, next) => {
   const status  = err.status || err.statusCode || 500;
   const message = err.message || 'Erreur interne du serveur';
 
-  if (process.env.NODE_ENV !== 'production') {
+  const logger = require('../utils/logger');
+  if (process.env.ENABLE_DETAILED_LOGS === 'true') {
+    logger.error(`[ERROR] ${req.method} ${req.originalUrl} | Status: ${status} | ${message}`, { 
+      ip: req.ip, 
+      stack: err.stack 
+    });
+  } else if (process.env.NODE_ENV !== 'production') {
     console.error('❌ Error:', err.stack);
   }
 

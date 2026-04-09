@@ -12,7 +12,7 @@ const Content = require('../models/Content.model');
 const getHlsToken = async (req, res, next) => {
   try {
     const { contentId } = req.params;
-    
+
     // Vérification de la disponibilité du fichier
     const content = await Content.findById(contentId);
     if (!content) return res.status(404).json({ message: 'Contenu introuvable' });
@@ -26,11 +26,21 @@ const getHlsToken = async (req, res, next) => {
       req.cookies?.sessionId || ''
     );
 
-    // Génère le token HMAC HLS conforme au design
+    // Gestion de la plateforme hybride (Web vs Mobile)
+    const platform = req.headers['x-platform'] || 'web';
+    const deviceId = req.headers['x-device-id'] || null;
+
+    if (platform === 'mobile' && !deviceId) {
+      return res.status(400).json({ message: 'Le header X-Device-Id est obligatoire pour les requêtes mobiles.' });
+    }
+
+    // Génère le token HMAC HLS conforme au design hybride
     const token = generateHlsToken(
       contentId,
       req.user?.id || 'anonymous',
-      fingerprint
+      fingerprint,
+      platform,
+      deviceId
     );
 
     // Injecter le token dans un cookie strictement lié au chemin de ce contenu
