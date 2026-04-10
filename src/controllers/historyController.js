@@ -12,7 +12,8 @@ const recordHistory = async (req, res, next) => {
   // console.log('HISTORY HANDLER');
   try {
     const { contentId }        = req.params;
-    const { progress = 0, completed = false } = req.body;
+    // duration from body is the total content duration sent by the client player
+    const { progress = 0, duration = 0, completed = false } = req.body;
     const userId               = req.user.id;
 
     // Vérifier que le contenu existe
@@ -22,11 +23,14 @@ const recordHistory = async (req, res, next) => {
     }
 
     // Calculer si terminé automatiquement (>90% de la durée)
+    // Priorité : on utilise la durée envoyée par le client (duration body)
+    // Fallback : durée enregistrée en base (content.duration)
+    const effectiveDuration = duration > 0 ? duration : content.duration;
     const isCompleted = completed ||
-      (content.duration > 0 && progress >= content.duration * 0.9);
+      (effectiveDuration > 0 && progress >= effectiveDuration * 0.9);
 
     // Upsert — met à jour ou crée
-    const history = await WatchHistory.findOneAndUpdate(
+    await WatchHistory.findOneAndUpdate(
       { userId, contentId },
       {
         userId,
@@ -38,7 +42,7 @@ const recordHistory = async (req, res, next) => {
       { upsert: true, new: true }
     );
 
-    return res.json({ history });
+    return res.json({ message: 'Progression enregistrée' });
   } catch (err) {
 
     next(err);
@@ -56,13 +60,19 @@ const getHistory = async (req, res, next) => {
     const skip  = (parseInt(page) - 1) * parseInt(limit);
     const total = await WatchHistory.countDocuments({ userId });
 
-    const history = await WatchHistory
+    const rawHistory = await WatchHistory
       .find({ userId })
       .populate('contentId', 'title thumbnail type duration accessType')
       .sort({ watchedAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
+
+    // Renommer contentId → content pour correspondre à la documentation API v1.1
+    const history = rawHistory.map(h => {
+      const { contentId, ...rest } = h;
+      return { ...rest, content: contentId };
+    });
 
     return res.json({
       history,

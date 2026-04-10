@@ -39,6 +39,10 @@ app.use(
   }),
 );
 
+// ── Logs d'Activité Détaillés ──
+const activityLogger = require('./src/middlewares/activityLogger.middleware');
+app.use(activityLogger);
+
 // ── CORS ──
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
 app.use(
@@ -46,15 +50,15 @@ app.use(
     origin: (origin, callback) => {
       // Autoriser les requêtes sans origin (Postman, mobile)
       if (!origin) return callback(null, true);
-      
+
       // Nettoyer l'origine (enlever le slash final)
       const cleanOrigin = origin.replace(/\/$/, "");
-      
+
       // Check si localhost ou inclus dans allowedOrigins
       if (cleanOrigin.includes('localhost') || cleanOrigin.includes('127.0.0.1') || allowedOrigins.includes(cleanOrigin)) {
         return callback(null, true);
       }
-      
+
       console.warn('CORS Blocked:', origin);
       callback(new Error("CORS non autorisé"));
     },
@@ -65,7 +69,7 @@ app.use(
 // ── Rate limiting ──
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100000000000000,
+  max: 10,
   message: { message: "Trop de tentatives. Réessayez dans 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,

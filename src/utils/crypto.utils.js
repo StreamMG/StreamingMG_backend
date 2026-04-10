@@ -8,13 +8,15 @@ exports.generateFingerprint = (ip = '', sessionId = '') =>
 'TEST-FINGERPRINT-1234567890'; // POUR TESTS UNIQUEMENT, REMPLACER PAR LA VRAIE FONCTION EN PROD ;
 
 // Token HLS signé HMAC-SHA256 (10 min)
-exports.generateHlsToken = (contentId, userId, fingerprint) => {
+exports.generateHlsToken = (contentId, userId, fingerprint, platform = 'web', deviceId = null) => {
   const header  = b64url({ alg: 'HS256', typ: 'HLS' });
-  const payload = b64url({
-    contentId, userId, fingerprint,
+  const payloadData = {
+    contentId, userId, fingerprint, p: platform,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 600,
-  });
+  };
+  if (deviceId) payloadData.did = deviceId;
+  const payload = b64url(payloadData);
   const sig = crypto
     .createHmac('sha256', process.env.HLS_TOKEN_SECRET)
     .update(`${header}.${payload}`)
@@ -22,7 +24,7 @@ exports.generateHlsToken = (contentId, userId, fingerprint) => {
   return `${header}.${payload}.${sig}`;
 };
 
-exports.verifyHlsToken = (token, currentFingerprint) => {
+exports.verifyHlsToken = (token) => {
   try {
     const [h, p, s] = token.split('.');
     if (!h || !p || !s) return null;
@@ -33,7 +35,6 @@ exports.verifyHlsToken = (token, currentFingerprint) => {
     if (!crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected))) return null;
     const pl = JSON.parse(Buffer.from(p, 'base64url').toString());
     if (pl.exp < Math.floor(Date.now() / 1000)) return null;
-    if (pl.fingerprint !== currentFingerprint) return null;
     return pl;
   } catch { return null; }
 };
