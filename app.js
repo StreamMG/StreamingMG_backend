@@ -40,11 +40,13 @@ app.use(
 );
 
 // ── Logs d'Activité Détaillés ──
-const activityLogger = require('./src/middlewares/activityLogger.middleware');
+const activityLogger = require("./src/middlewares/activityLogger.middleware");
 app.use(activityLogger);
 
 // ── CORS ──
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173").split(",");
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || "http://localhost:5173"
+).split(",");
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -55,11 +57,15 @@ app.use(
       const cleanOrigin = origin.replace(/\/$/, "");
 
       // Check si localhost ou inclus dans allowedOrigins
-      if (cleanOrigin.includes('localhost') || cleanOrigin.includes('127.0.0.1') || allowedOrigins.includes(cleanOrigin)) {
+      if (
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1") ||
+        allowedOrigins.includes(cleanOrigin)
+      ) {
         return callback(null, true);
       }
 
-      console.warn('CORS Blocked:', origin);
+      console.warn("CORS Blocked:", origin);
       callback(new Error("CORS non autorisé"));
     },
     credentials: true,
