@@ -12,6 +12,7 @@ const logger  = require('../utils/logger');
 //  POST /api/provider/contents — Upload contenu
 // ─────────────────────────────────────────────────────────────
 const uploadContent = async (req, res, next) => {
+  console.log('📤 Upload contenu initié par fournisseur:', req.user.id);
   try {
     const {
       title, description, type, category,
@@ -24,10 +25,12 @@ const uploadContent = async (req, res, next) => {
 
     // validateThumbnail middleware s'en charge mais double vérification
     if (!thumbnailFile) {
+      console.log('❌ Upload échoué : vignette manquante');
       return res.status(400).json({ message: 'La vignette est obligatoire.' });
     }
 
     if (!mediaFile) {
+      console.log('❌ Upload échoué : fichier media manquant');
       return res.status(400).json({ message: 'Le fichier media est obligatoire.' });
     }
 
@@ -48,7 +51,7 @@ const uploadContent = async (req, res, next) => {
 
     // Créer le contenu en base pour obtenir l'_id
     const content = await Content.create(contentData);
-
+   
     // ── Traitement asynchrone du media ──
     if (type === 'video') {
       // Lancer le transcoding HLS en arrière-plan
@@ -68,6 +71,7 @@ const uploadContent = async (req, res, next) => {
 
     } else if (type === 'audio') {
       // Audio — déjà dans /uploads/audio/
+      // console.log("dans le transcoder")
       const audioPath = `/uploads/audio/${mediaFile.filename}`;
       let duration = 0;
       try {
@@ -81,10 +85,17 @@ const uploadContent = async (req, res, next) => {
           artist: artist || null,
           album:  album  || null
         });
-      } catch {
+      } catch(e) {
+        console.log('⚠️ Impossible d\'extraire la durée ou les métadonnées ID3 de l\'audio:', e.message);
         await Content.findByIdAndUpdate(content._id, { audioPath, duration });
       }
     }
+
+     console.log('✅ Fichiers reçus :', {
+      thumbnail: thumbnailFile.filename,
+      media: mediaFile.filename,
+      type
+    });
 
     return res.status(201).json({
       message: 'Contenu uploadé — en attente de validation',
@@ -92,6 +103,7 @@ const uploadContent = async (req, res, next) => {
     });
 
   } catch (err) {
+    console.error('❌ Erreur lors de l\'upload du contenu:', err);
     next(err);
   }
 };

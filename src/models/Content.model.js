@@ -18,7 +18,7 @@ const ContentSchema = new mongoose.Schema({
   category:    { 
     type: String, 
     required: true,
-    enum: ['film','salegy','hira-gasy','tsapiky','beko','documentaire','podcast','tutoriel','musique-contemporaine','autre'] 
+    enum: ['film','musique','documentaire','podcast','autre','tutoriel',"tantara"] 
   },
   subCategory: { type: String, default: null },
   language:    { type: String, required: true, enum: ['mg', 'fr', 'bilingual'] },
