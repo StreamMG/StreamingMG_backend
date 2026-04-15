@@ -7,3 +7,4 @@ src/uploads
 PorteOuverteV2
 TestContenu/
 logs/
+*.directory
