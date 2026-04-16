@@ -4,7 +4,6 @@ uploads/
 *.log
 .DS_Store
 src/uploads
-PorteOuverteV2
 TestContenu/
 logs/
 *.directory
