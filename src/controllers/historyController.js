@@ -7,7 +7,9 @@ const Content      = require('../models/Content.model');
 // ─────────────────────────────────────────────────────────────
 //  POST /api/history/:contentId — Enregistrer/MAJ progression
 // ─────────────────────────────────────────────────────────────
+// console.log('Entrer dans historyController.js');
 const recordHistory = async (req, res, next) => {
+  // console.log('HISTORY HANDLER');
   try {
     const { contentId }        = req.params;
     // duration from body is the total content duration sent by the client player
@@ -42,6 +44,7 @@ const recordHistory = async (req, res, next) => {
 
     return res.json({ message: 'Progression enregistrée' });
   } catch (err) {
+
     next(err);
   }
 };

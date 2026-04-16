@@ -7,3 +7,4 @@ src/uploads
 TestContenu/
 logs/
 *.directory
+.directory

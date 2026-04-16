@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  middlewares/hlsTokenizer.middleware.js
-//  ★ HMAC-SHA256 + fingerprint — Référence : PorteOuverteV2 §5
-//  Utilise crypto.utils.js conforme au user_global
-// ─────────────────────────────────────────────────────────────
 const { verifyHlsToken, generateFingerprint } = require('../utils/crypto.utils');
 
 module.exports = (req, res, next) => {
@@ -49,7 +44,6 @@ module.exports = (req, res, next) => {
 
   req.hlsPayload = payload;
 
-  // Anti-cache / anti-téléchargement
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');

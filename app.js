@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────
 //  app.js — Configuration Express + Middlewares globaux
 // ─────────────────────────────────────────────────────────────
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const rateLimit = require("express-rate-limit");
-const cookieParser = require("cookie-parser");
-const path = require("path");
+const express      = require('express');
+const helmet       = require('helmet');
+const cors         = require('cors');
+const rateLimit    = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const path         = require('path');
 
 const errorHandler = require("./src/middlewares/errorHandler");
 const validateSignedUrl = require("./src/middlewares/validateSignedUrl");
@@ -139,7 +139,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// ── Gestion d'erreurs globale ──
+// 10. GESTION D'ERREURS GLOBALE
 app.use(errorHandler);
 
 module.exports = app;

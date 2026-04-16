@@ -1,7 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-//  routes/hlsFiles.routes.js — Servir les fichiers .ts et .m3u8
-//  Montés sur /hls/:contentId/ dans app.js
-//  Protégés par hlsTokenizer
+//  routes/hlsFiles.routes.js — FIX WINDOWS
 // ─────────────────────────────────────────────────────────────
 const router  = require('express').Router({ mergeParams: true });
 const express = require('express');
@@ -24,7 +22,7 @@ const antiAspirationLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Toutes les routes /hls/:contentId/* nécessitent le token
+// 1. Appliquer le middleware de sécurité sur toutes les requêtes du routeur
 router.use(hlsTokenMiddleware);
 
 // Appliquer le filtre anti-aspiration sur cette sous-route
@@ -57,11 +55,19 @@ router.get('/index.m3u8', async (req, res, next) => {
 // Utilise le contentId des paramètres pour cibler le bon dossier
 router.use((req, res, next) => {
   const { contentId } = req.params;
-  const hlsPath = path.join(__dirname, '../../uploads/hls', contentId);
   
+  // FIX : On utilise path.resolve + process.cwd() pour éviter les erreurs de dossier parent
+  // Ton ffmpegService écrit dans : racine/uploads/hls/contentId
+  const hlsPath = path.resolve(process.cwd(), 'uploads', 'hls', contentId);
+
+  // DEBUG : Décommente la ligne suivante si la 404 persiste pour voir le chemin réel
+  // console.log(`🔍 Tentative d'accès HLS sur : ${hlsPath}`);
+
+  // On passe la main à express.static
+  // On utilise req.url pour que static sache quel fichier (.m3u8 ou .ts) chercher dans hlsPath
   express.static(hlsPath, {
     dotfiles: 'deny',
-    index: false
+    fallthrough: true // Permet de passer au middleware suivant (ou 404) si le fichier n'existe pas
   })(req, res, next);
 });
 

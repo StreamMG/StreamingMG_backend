@@ -21,7 +21,7 @@ const getHlsToken = async (req, res, next) => {
 
     // Calcul du fingerprint (UA + IP + sessionId) conforme au design
     const fingerprint = generateFingerprint(
-      req.headers['user-agent'] || '',
+      // req.headers['user-agent'] || '',
       req.ip || '',
       req.cookies?.sessionId || ''
     );

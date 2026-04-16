@@ -1,6 +1,5 @@
 // ─────────────────────────────────────────────────────────────
-//  services/ffmpegService.js — Pipeline transcoding HLS
-//  MP4 → segments .ts de 10 secondes via fluent-ffmpeg
+//  services/ffmpegService.js — Pipeline transcoding HLS (WINDOWS FIX)
 // ─────────────────────────────────────────────────────────────
 const ffmpeg = require('fluent-ffmpeg');
 const path   = require('path');
@@ -9,31 +8,36 @@ const logger = require('../utils/logger');
 
 /**
  * Transcode un fichier MP4 en flux HLS (segments .ts de 10s)
- * 
- * Génère dans /uploads/hls/<contentId>/ :
- *   - index.m3u8    (manifest)
- *   - seg000.ts     (segment 0-10s)
- *   - seg001.ts     ...
- *
- * @param {string} inputPath  - Chemin absolu vers le .mp4 source
- * @param {string} contentId  - ID MongoDB du contenu
- * @returns {Promise<string>} - Chemin relatif vers le manifest
+ * * Génère dans /uploads/hls/<contentId>/ :
+ * - index.m3u8     (manifest)
+ * - seg000.ts      (segments)
  */
 const transcodeToHls = (inputPath, contentId) => {
   return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, `../../uploads/hls/${contentId}`);
-    fs.mkdirSync(outputDir, { recursive: true });
+    // FIX WINDOWS : On utilise path.resolve et process.cwd() pour pointer 
+    // vers la racine réelle du projet, peu importe où se trouve ce fichier service.
+    const rootDir = process.cwd();
+    const outputDir = path.resolve(rootDir, 'uploads', 'hls', contentId);
+    
+    // Création récursive du dossier de destination
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     const outputManifest = path.join(outputDir, 'index.m3u8');
+    const segmentPattern = path.join(outputDir, 'seg%03d.ts');
+
+    console.log(`🎬 Démarrage Transcoding [${contentId}]`);
+    console.log(`📂 Destination : ${outputDir}`);
 
     ffmpeg(inputPath)
       .renice(10)
       .outputOptions([
-        '-codec: copy',      // Pas de re-encodage → rapide
+        '-codec: copy',         // Pas de ré-encodage (Ultra rapide)
         '-start_number 0',
-        '-hls_time 10',      // ← Segments de 10 secondes
-        '-hls_list_size 0',  // Tous les segments dans le manifest
-        '-hls_segment_filename', path.join(outputDir, 'seg%03d.ts'),
+        '-hls_time 10',         // Segments de 10 secondes
+        '-hls_list_size 0',     // Playlist complète (VOD)
+        '-hls_segment_filename', segmentPattern, // Chemin absolu des segments
         '-f hls'
       ])
       .output(outputManifest)
@@ -59,9 +63,6 @@ const transcodeToHls = (inputPath, contentId) => {
 
 /**
  * Obtient la durée d'une vidéo via ffprobe
- * 
- * @param {string} inputPath - Chemin absolu vers le fichier
- * @returns {Promise<number>} - Durée en secondes (entier)
  */
 const getVideoDuration = (inputPath) => {
   return new Promise((resolve, reject) => {
@@ -73,12 +74,12 @@ const getVideoDuration = (inputPath) => {
 };
 
 /**
- * Supprime les fichiers HLS d'un contenu (lors de la suppression)
- *
- * @param {string} contentId
+ * Supprime les fichiers HLS d'un contenu
  */
 const deleteHlsFiles = (contentId) => {
-  const dir = path.join(__dirname, `../../uploads/hls/${contentId}`);
+  const rootDir = process.cwd();
+  const dir = path.resolve(rootDir, 'uploads', 'hls', contentId);
+  
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
     logger.info(`🗑️ HLS supprimé: ${contentId}`);
