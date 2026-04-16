@@ -100,11 +100,11 @@ app.use(cookieParser());
 // ── Fichiers statiques publics ──
 app.use(
   "/uploads/thumbnails",
-  express.static(path.join(__dirname, "uploads/thumbnails")),
+  express.static(path.resolve(process.cwd(), "uploads/thumbnails")),
 );
 app.use(
   "/uploads/audio",
-  express.static(path.join(__dirname, "uploads/audio")),
+  express.static(path.resolve(process.cwd(), "uploads/audio")),
 );
 
 // /uploads/hls → protégé par hlsTokenizer (dans les routes HLS)

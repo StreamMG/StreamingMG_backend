@@ -11,11 +11,11 @@ const transports = [
 if (isDetailed) {
   transports.push(
     new winston.transports.File({ 
-      filename: path.join(__dirname, '../../logs/error.log'), 
+      filename: path.resolve(process.cwd(), 'logs/error.log'),
       level: 'error' 
     }),
     new winston.transports.File({ 
-      filename: path.join(__dirname, '../../logs/activity.log') 
+      filename: path.resolve(process.cwd(), 'logs/activity.log') 
     })
   );
 }

@@ -35,7 +35,7 @@ router.get('/index.m3u8', async (req, res, next) => {
   if (req.hlsPayload?.p !== 'mobile') return next();
 
   const { contentId } = req.params;
-  const filePath = path.join(__dirname, '../../uploads/hls', contentId, 'index.m3u8');
+  const filePath = path.resolve(process.cwd(), 'uploads/hls', contentId, 'index.m3u8');
   
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');

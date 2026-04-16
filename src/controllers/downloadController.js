@@ -26,9 +26,9 @@ const requestDownload = async (req, res, next) => {
     // Déterminer le fichier source à signer (Doit correspondre au middleware validateSignedUrl)
     let filePath;
     if (content.type === 'audio' && content.audioPath) {
-      filePath = `src/uploads/audio/${path.basename(content.audioPath)}`;
+      filePath = `uploads/audio/${path.basename(content.audioPath)}`;
     } else {
-      filePath = `src/uploads/private/${contentId}_src.mp4`;
+      filePath = `uploads/private/${contentId}_src.mp4`;
     }
 
     // ── Générer clé AES-256 et IV ──────────────────────────
@@ -65,7 +65,7 @@ const servePrivateFile = async (req, res, next) => {
       return res.status(404).json({ message: 'Fichier non résolu' });
     }
 
-    const absolutePath = path.join(__dirname, '../../', filePath);
+    const absolutePath = path.resolve(process.cwd(), filePath);
 
     if (!fs.existsSync(absolutePath)) {
       return res.status(404).json({ message: 'Fichier source introuvable sur le disque' });

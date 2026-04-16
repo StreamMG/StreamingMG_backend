@@ -28,9 +28,9 @@ const validateSignedUrl = async (req, res, next) => {
 
     let filePath;
     if (content.type === 'audio' && content.audioPath) {
-      filePath = `src/uploads/audio/${path.basename(content.audioPath)}`;
+      filePath = `uploads/audio/${path.basename(content.audioPath)}`;
     } else {
-      filePath = `src/uploads/private/${contentId}_src.mp4`;
+      filePath = `uploads/private/${contentId}_src.mp4`;
     }
 
     // Recalculer la signature HMAC-SHA256
