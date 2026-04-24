@@ -41,7 +41,7 @@ async function request(method, urlPath, base, body = null, headers = {}) {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function runTests() {
-  console.log('💳 ── SIMULATION STRIPE END-TO-END ── 💳\\n');
+  console.log('💳 ── SIMULATION STRIPE END-TO-END ── 💳\n');
 
   try { await request('GET', '/api/health', BASE); } catch {
     console.error("❌ Le serveur backend principal n'est pas lancé (:3001). Lancez node server.js"); process.exit(1);
@@ -57,7 +57,7 @@ async function runTests() {
   console.log("✅ Authentification réussie (Utilisateur Test).");
 
   // TEST 1: ABONNEMENT PREMIUM
-  console.log("\\n-- 1. Simulation Abonnement Mensuel Premium --");
+  console.log("\n-- 1. Simulation Abonnement Mensuel Premium --");
   const subRes = await request('POST', '/api/payment/subscribe', BASE, { plan: 'monthly' }, { Authorization: `Bearer ${TOKEN}` });
   
   if (subRes.status !== 200 || !subRes.body.clientSecret) {
@@ -87,8 +87,17 @@ async function runTests() {
   }
 
   // TEST 2: ACHAT UNITAIRE (Idempotence)
-  console.log("\\n-- 2. Simulation Achat Unitaire (Contenu Payant) --");
-  const contentId = "69c797ee53cfb67592f4491a"; // Seeded 'paid' content in the DB
+  console.log("\n-- 2. Simulation Achat Unitaire (Contenu Payant) --");
+  
+  // Injection dynamique d'un contenu payant via mongo
+  const fakeId = "60e0935f88ac94fc4305c123";
+  try {
+    const injectCmd = `mongosh TestStreamMG --eval "db.contents.updateOne({_id: ObjectId('${fakeId}')}, {'\\$set': {title: 'Oppenheimer', type:'video', accessType: 'paid', price: 50000, isPublished: true, category: 'film', language: 'bilingual', description: 'Paid Film Stripe', thumbnail: '/fake'}}, {upsert: true})"`;
+    require('child_process').execSync(injectCmd);
+  } catch(e) {}
+
+  const contentId = fakeId;
+
   const purRes = await request('POST', '/api/payment/purchase', BASE, { contentId }, { Authorization: `Bearer ${TOKEN}` });
   
   if (purRes.status !== 200 || !purRes.body.clientSecret) {
@@ -124,7 +133,7 @@ async function runTests() {
     console.error(`❌ L'achat est manquant dans la liste des achats.`); process.exit(1);
   }
 
-  console.log("\\n🔥 TOUS LES TESTS STRIPE SONT PARFAITS. PIPELINE BACKEND VALIDEE À 100% 🔥\\n");
+  console.log("\n🔥 TOUS LES TESTS STRIPE SONT PARFAITS. PIPELINE BACKEND VALIDEE À 100% 🔥\n");
 }
 
 runTests();

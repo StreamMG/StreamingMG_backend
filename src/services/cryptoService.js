@@ -53,13 +53,15 @@ const decryptAes256Gcm = (encryptedData, key, iv, authTag) => {
 };
 
 // ── URLs SIGNÉES ─────────────────────────────────────────────
-const signDownloadUrl = (filePath, contentId) => {
-  const expiry = Date.now() + (parseInt(process.env.SIGNED_URL_EXPIRY) || 900) * 1000;
+const signDownloadUrl = (filePath, contentId, expirySeconds) => {
+  const secs   = expirySeconds || parseInt(process.env.SIGNED_URL_EXPIRY) || 900;
+  const expiry = Date.now() + secs * 1000;
   const signature = crypto
     .createHmac('sha256', process.env.SIGNED_URL_SECRET)
     .update(`${filePath}|${expiry}`)
     .digest('hex');
-  const baseUrl = (process.env.BASE_URL || 'http://localhost:3001').split(',')[0];
+  const rawBase = process.env.BASE_URL || 'http://localhost:3001';
+  const baseUrl = rawBase.split(',')[0].trim();
   const signedUrl =
     `${baseUrl}/private/${contentId}` +
     `?expires=${expiry}&sig=${signature}`;
