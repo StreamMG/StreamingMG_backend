@@ -23,9 +23,17 @@ const subscribe = async (req, res, next) => {
       return res.status(400).json({ message: 'Plan invalide. Utilisez monthly ou yearly.' });
     }
 
-    const paymentIntent = await createSubscriptionIntent(req.user.id, plan);
-
-    return res.json({ clientSecret: paymentIntent.client_secret });
+    // MOCK Mada-Network : Valide automatiquement l'abonnement même en Prod
+    const premiumExpiry = new Date(Date.now() + (plan === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000);
+    await User.findByIdAndUpdate(req.user.id, {
+      isPremium: true,
+      role: 'premium',
+      premiumExpiry
+    });
+    return res.json({ 
+      clientSecret: 'mock_success', 
+      message: 'Abonnement activé automatiquement sans appeler Stripe.' 
+    });
   } catch (err) {
     next(err);
   }
@@ -50,15 +58,20 @@ const createPurchase = async (req, res, next) => {
       return res.status(400).json({ message: 'Contenu non achetable' });
     }
 
-    const paymentIntent = await createPurchaseIntent(
+    // MOCK Mada-Network : Valide automatiquement l'achat unitaire même en Prod
+    await Purchase.create({
       userId,
       contentId,
-      content.price,
-      content.title
-    );
-
+      stripePaymentId: 'mock_pi_' + Date.now(),
+      amount: content.price,
+      purchasedAt: new Date()
+    });
+    
     // TF-PUR-01 : retourne { clientSecret }
-    return res.json({ clientSecret: paymentIntent.client_secret });
+    return res.json({ 
+      clientSecret: 'mock_success',
+      message: 'Achat validé automatiquement sans appeler Stripe.' 
+    });
 
   } catch (err) {
     next(err);

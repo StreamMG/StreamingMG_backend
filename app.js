@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────
 //  app.js — Configuration Express + Middlewares globaux
 // ─────────────────────────────────────────────────────────────
-const express      = require('express');
-const helmet       = require('helmet');
-const cors         = require('cors');
-const rateLimit    = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
-const path         = require('path');
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
+const path = require("path");
 
 const errorHandler = require("./src/middlewares/errorHandler");
 const validateSignedUrl = require("./src/middlewares/validateSignedUrl");
@@ -75,7 +75,7 @@ app.use(
 // ── Rate limiting ──
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 100000,
   message: { message: "Trop de tentatives. Réessayez dans 15 minutes." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -118,6 +118,7 @@ app.use("/api", apiLimiter);
 const hlsFilesRouter = require("./src/routes/hlsFiles.routes");
 
 app.use("/api/auth", authRoutes);
+app.use("/api/user", require("./src/routes/user.routes"));
 app.use("/api/contents", contentRoutes);
 app.use("/api/hls", hlsRoutes);
 app.use("/api/download", downloadRoutes);
