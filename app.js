@@ -119,6 +119,7 @@ const hlsFilesRouter = require("./src/routes/hlsFiles.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/user", require("./src/routes/user.routes"));
+app.use("/api/audio", require("./src/routes/audio.routes"));
 app.use("/api/contents", contentRoutes);
 app.use("/api/hls", hlsRoutes);
 app.use("/api/download", downloadRoutes);
