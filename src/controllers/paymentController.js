@@ -81,7 +81,7 @@ const createPurchase = async (req, res, next) => {
     }
 
     // --- MODE STRIPE OFFICIEL ---
-    const paymentIntent = await createPurchaseIntent(userId, contentId, content.price);
+    const paymentIntent = await createPurchaseIntent(userId, contentId, content.price, content.title);
     return res.json({ clientSecret: paymentIntent.client_secret });
 
   } catch (err) {
