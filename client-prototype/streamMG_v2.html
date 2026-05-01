@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamMG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM TOKENS — StreamMG v2.0
+   ═══════════════════════════════════════════ */
+:root {
+  --primary:        #3584e4;
+  --primary-light:  #62a0ea;
+  --primary-dark:   #1c71d8;
+  --primary-muted:  #1a3d6e;
+  --primary-glow:   rgba(53,132,228,0.18);
+  --primary-glow2:  rgba(53,132,228,0.08);
+
+  --gold:           #e8c547;
+  --gold-light:     #f5d96c;
+  --gold-dark:      #c9a227;
+  --gold-muted:     rgba(232,197,71,0.15);
+
+  --teal:           #2ec27e;
+  --teal-light:     #57e389;
+  --teal-dark:      #1a7348;
+  --teal-muted:     rgba(46,194,126,0.14);
+
+  --bg-base:        #0d1018;
+  --bg-surface:     #171b26;
+  --bg-raised:      #202434;
+  --bg-overlay:     #2a2f42;
+  --bg-border:      #2e3347;
+
+  --text-primary:   #eef0f6;
+  --text-secondary: #8d96a8;
+  --text-muted:     #545d6e;
+  --text-on-blue:   #ffffff;
+
+  --success:        #57e389;
+  --error:          #ed333b;
+  --warning:        #f5c211;
+  --info:           #62a0ea;
+
+  --r-s:  6px;  --r-m:  10px; --r-l:  16px;
+  --r-xl: 24px; --r-2xl:32px; --r-full: 9999px;
+
+  --sp-1:4px;   --sp-2:8px;   --sp-3:12px;  --sp-4:16px;
+  --sp-5:20px;  --sp-6:24px;  --sp-8:32px;  --sp-10:40px;
+  --sp-12:48px; --sp-16:64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.60;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: 88px;
+}
+img { display: block; width: 100%; height: 100%; object-fit: cover; }
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: 'DM Sans', sans-serif; border: none; }
+
+/* ═══════════════════════════════════════════
+   TOPBAR
+   ═══════════════════════════════════════════ */
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-10);
+  gap: var(--sp-8);
+  transition: background 300ms ease, border-color 300ms ease;
+  background: rgba(13,16,24,0.0);
+}
+.topbar.scrolled {
+  background: rgba(13,16,24,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.logo {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 12px rgba(53,132,228,0.4);
+}
+.logo-icon svg { width: 12px; height: 12px; }
+.logo .mg { color: var(--primary-light); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(238,240,246,0.65);
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-m);
+  transition: color 150ms, background 150ms;
+}
+.nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+.nav-links a.active { color: var(--text-primary); font-weight: 600; background: rgba(53,132,228,0.12); }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* Search pill */
+.search-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 36px;
+  padding: 0 var(--sp-4);
+  background: rgba(32,36,52,0.7);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--r-full);
+  cursor: text;
+  transition: background 200ms, border-color 200ms, width 300ms;
+  width: 200px;
+  position: relative;
+}
+.search-pill:focus-within {
+  background: var(--bg-raised);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  width: 280px;
+}
+.search-pill input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  width: 100%;
+}
+.search-pill input::placeholder { color: var(--text-muted); }
+
+.btn-notif {
+  width: 36px; height: 36px;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  transition: color 150ms, background 150ms;
+  position: relative;
+}
+.btn-notif:hover { color: var(--text-primary); background: var(--bg-raised); }
+.notif-dot {
+  position: absolute;
+  top: 7px; right: 7px;
+  width: 7px; height: 7px;
+  background: var(--primary);
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--bg-base);
+}
+
+.btn-premium {
+  height: 36px;
+  padding: 0 var(--sp-4);
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  color: #1a1000;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--r-full);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 14px rgba(232,197,71,0.35);
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: opacity 180ms, transform 150ms;
+  white-space: nowrap;
+}
+.btn-premium:hover { opacity: 0.9; }
+.btn-premium:active { transform: scale(0.97); }
+
+.avatar {
+  width: 34px; height: 34px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, var(--primary-muted), var(--primary));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  border: 2px solid rgba(53,132,228,0.4);
+  transition: border-color 150ms;
+}
+.avatar:hover { border-color: var(--primary); }
+
+/* ═══════════════════════════════════════════
+   HERO — Full viewport, cinematic
+   ═══════════════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 600px;
+  max-height: 860px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.hero-bg {
+  position: absolute; inset: 0;
+}
+.hero-bg img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  filter: brightness(0.38) saturate(0.7);
+  transform: scale(1.04);
+  animation: heroZoom 12s ease-out forwards;
+}
+@keyframes heroZoom {
+  from { transform: scale(1.04); }
+  to   { transform: scale(1.00); }
+}
+
+.hero-gradient {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(105deg, rgba(13,16,24,0.96) 0%, rgba(13,16,24,0.72) 45%, rgba(13,16,24,0.15) 80%, transparent 100%),
+    linear-gradient(to top, rgba(13,16,24,1) 0%, rgba(13,16,24,0.5) 25%, transparent 55%),
+    linear-gradient(to bottom, rgba(13,16,24,0.6) 0%, transparent 20%);
+}
+
+/* Ambient glow behind hero content */
+.hero-glow {
+  position: absolute;
+  left: -60px; top: 50%;
+  transform: translateY(-50%);
+  width: 500px; height: 400px;
+  background: radial-gradient(ellipse, rgba(53,132,228,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  padding: 0 var(--sp-10);
+  max-width: 640px;
+  margin-top: 32px;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+  margin-bottom: var(--sp-5);
+  opacity: 0;
+  animation: slideRight 500ms 200ms ease-out forwards;
+}
+.eyebrow-line {
+  width: 28px; height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: var(--r-full);
+}
+.eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: var(--r-full);
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  animation: pulse 2s 700ms infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 8px var(--primary); }
+  50%      { box-shadow: 0 0 16px var(--primary-light); }
+}
+
+.hero-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-5);
+  opacity: 0;
+  animation: slideRight 500ms 350ms ease-out forwards;
+}
+.hero-title em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--primary-light), #a8d1ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-desc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(141,150,168,0.9);
+  max-width: 460px;
+  margin-bottom: var(--sp-6);
+  font-weight: 400;
+  opacity: 0;
+  animation: slideRight 500ms 450ms ease-out forwards;
+}
+
+.hero-tags {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-8);
+  opacity: 0;
+  animation: slideRight 500ms 530ms ease-out forwards;
+}
+.hero-tag {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex; align-items: center; gap: 5px;
+}
+.hero-tag + .hero-tag::before {
+  content: '';
+  width: 3px; height: 3px;
+  border-radius: var(--r-full);
+  background: var(--text-muted);
+  display: block;
+  margin-right: 2px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  opacity: 0;
+  animation: slideRight 500ms 620ms ease-out forwards;
+}
+
+.btn-hero-play {
+  height: 50px;
+  padding: 0 var(--sp-8);
+  background: var(--primary);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--r-l);
+  box-shadow: 0 6px 24px rgba(53,132,228,0.5);
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  transition: background 180ms, transform 150ms, box-shadow 180ms;
+}
+.btn-hero-play:hover {
+  background: var(--primary-light);
+  box-shadow: 0 8px 32px rgba(53,132,228,0.6);
+  transform: translateY(-1px);
+}
+.btn-hero-play:active { transform: scale(0.97); }
+
+.btn-hero-secondary {
+  height: 50px;
+  padding: 0 var(--sp-6);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--r-l);
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  backdrop-filter: blur(8px);
+  transition: background 180ms, border-color 180ms;
+}
+.btn-hero-secondary:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* Featured poster — right side */
+.hero-poster-area {
+  position: absolute;
+  right: var(--sp-10);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-end;
+  opacity: 0;
+  animation: slideLeft 600ms 500ms ease-out forwards;
+}
+
+.poster-card {
+  width: 160px;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(53,132,228,0.2);
+  cursor: pointer;
+  transition: transform 300ms ease, box-shadow 300ms ease;
+  background: var(--bg-surface);
+}
+.poster-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(53,132,228,0.4);
+}
+.poster-card.featured { width: 190px; margin-bottom: 20px; }
+
+.poster-img {
+  position: relative;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+}
+.poster-img img { width:100%;height:100%;object-fit:cover; transition: transform 400ms ease; }
+.poster-card:hover .poster-img img { transform: scale(1.05); }
+.poster-badge {
+  position: absolute;
+  top: var(--sp-2); right: var(--sp-2);
+  z-index: 2;
+}
+.poster-gradient {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(to top, rgba(23,27,38,0.95) 0%, transparent 100%);
+  z-index: 1;
+}
+.poster-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: var(--sp-3);
+}
+.poster-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 3px;
+}
+.poster-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Hero scroll indicator */
+.hero-scroll {
+  position: absolute;
+  bottom: var(--sp-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeIn 500ms 1200ms ease-out forwards;
+}
+.scroll-line {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--text-muted), transparent);
+  animation: scrollPulse 2s 1500ms infinite;
+}
+@keyframes scrollPulse {
+  0%   { opacity: 0.3; transform: scaleY(1); }
+  50%  { opacity: 1;   transform: scaleY(1); }
+  100% { opacity: 0;   transform: scaleY(0.5) translateY(20px); }
+}
+
+/* ─── Animations ─── */
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(20px) translateY(-50%); }
+  to   { opacity: 1; transform: translateX(0) translateY(-50%); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   BADGES
+   ═══════════════════════════════════════════ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.badge-premium {
+  background: rgba(26,61,110,0.9);
+  color: var(--gold);
+  border: 1px solid rgba(232,197,71,0.3);
+}
+.badge-payant {
+  background: rgba(26,115,72,0.9);
+  color: var(--teal);
+  border: 1px solid rgba(46,194,126,0.3);
+}
+.badge-free {
+  background: rgba(32,36,52,0.9);
+  color: var(--text-secondary);
+  border: 1px solid var(--bg-border);
+}
+.badge-tuto {
+  background: rgba(53,132,228,0.18);
+  color: var(--primary-light);
+  border: 1px solid rgba(53,132,228,0.3);
+}
+.badge-new {
+  background: rgba(237,51,59,0.18);
+  color: #ff6b75;
+  border: 1px solid rgba(237,51,59,0.3);
+}
+
+/* ═══════════════════════════════════════════
+   MAIN LAYOUT
+   ═══════════════════════════════════════════ */
+.main {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: var(--sp-10) var(--sp-10) var(--sp-16);
+}
+
+/* ─── Section headers ─── */
+.section { margin-bottom: var(--sp-12); }
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--sp-6);
+}
+.section-title-wrap { display: flex; flex-direction: column; gap: 3px; }
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  font-family: 'DM Sans', sans-serif;
+}
+.section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.section-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  margin-top: 1px;
+}
+.btn-see-all {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-light);
+  background: transparent;
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-m);
+  display: inline-flex; align-items: center; gap: 4px;
+  transition: background 150ms;
+  border: none;
+  white-space: nowrap;
+}
+.btn-see-all:hover { background: var(--primary-glow2); }
+.btn-see-all svg { transition: transform 200ms; }
+.btn-see-all:hover svg { transform: translateX(3px); }
+
+/* ─── Carousel scroll ─── */
+.carousel-wrap {
+  position: relative;
+}
+.cards-row {
+  display: flex;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+  padding-top: 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.cards-row::-webkit-scrollbar { display: none; }
+.cards-row > * { scroll-snap-align: start; }
+
+/* ─── Content Card — Portrait ─── */
+.content-card {
+  flex: 0 0 auto;
+  width: 170px;
+  background: var(--bg-surface);
+  border-radius: var(--r-l);
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 250ms ease-out, box-shadow 250ms ease-out, border-color 250ms ease-out;
+  position: relative;
+}
+.content-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(53,132,228,0.25);
+  border-color: transparent;
+}
+.card-thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 143%;
+  overflow: hidden;
+  background: var(--bg-raised);
+}
+.card-thumb img,
+.card-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 450ms ease-out;
+}
+.content-card:hover .card-thumb img { transform: scale(1.07); }
+.card-thumb::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(23,27,38,0.9) 0%, rgba(23,27,38,0) 50%);
+  pointer-events: none; z-index: 1;
+}
+.card-badge {
+  position: absolute;
+  top: var(--sp-2); right: var(--sp-2);
+  z-index: 3;
+}
+
+/* Play overlay — full card */
+.card-play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13,16,24,0);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+  transition: background 250ms;
+}
+.content-card:hover .card-play-overlay { background: rgba(13,16,24,0.35); }
+.card-play-btn {
+  width: 44px; height: 44px;
+  border-radius: var(--r-full);
+  background: rgba(53,132,228,0.95);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 250ms, transform 250ms;
+  box-shadow: 0 4px 20px rgba(53,132,228,0.6);
+}
+.content-card:hover .card-play-btn { opacity: 1; transform: scale(1); }
+
+.card-body {
+  padding: var(--sp-3) var(--sp-3) var(--sp-4);
+}
+.card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.card-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+
+/* Progress bar */
+.progress-wrap {
+  margin-top: var(--sp-2);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.progress-bar {
+  flex: 1; height: 3px;
+  background: var(--bg-overlay);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: var(--r-full);
+  transition: width 600ms ease;
+}
+.progress-pct {
+  font-size: 10px; font-weight: 600;
+  color: var(--primary-light);
+  min-width: 26px; text-align: right;
+}
+
+/* Wide card */
+.content-card-wide { width: 256px; }
+.card-thumb-wide { padding-top: 56.25%; }
+
+/* ═══════════════════════════════════════════
+   CONTINUE WATCHING
+   ═══════════════════════════════════════════ */
+.continue-strip {
+  display: flex;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  padding-bottom: var(--sp-2);
+  scrollbar-width: none;
+}
+.continue-strip::-webkit-scrollbar { display: none; }
+
+.continue-card {
+  flex: 0 0 auto;
+  width: 300px;
+  background: var(--bg-surface);
+  border-radius: var(--r-l);
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 200ms, transform 200ms, box-shadow 200ms;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+}
+.continue-card:hover {
+  border-color: rgba(53,132,228,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.continue-thumb {
+  flex: 0 0 78px;
+  height: 78px;
+  border-radius: var(--r-m);
+  overflow: hidden;
+  background: var(--bg-raised);
+  position: relative;
+}
+.continue-thumb img { width:100%;height:100%;object-fit:cover; transition: transform 300ms ease; }
+.continue-card:hover .continue-thumb img { transform: scale(1.06); }
+.continue-play-icon {
+  position: absolute; inset: 0;
+  background: rgba(13,16,24,0.4);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.continue-card:hover .continue-play-icon { opacity: 1; }
+
+.continue-info { flex: 1; min-width: 0; }
+.continue-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.continue-sub { font-size: 12px; color: var(--text-muted); margin-bottom: var(--sp-2); }
+.continue-bar { height: 3px; background: var(--bg-overlay); border-radius: var(--r-full); overflow: hidden; }
+.continue-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: var(--r-full); }
+
+/* ═══════════════════════════════════════════
+   FEATURED GRID — Documentaires
+   ═══════════════════════════════════════════ */
+.featured-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--sp-4);
+  height: 380px;
+}
+.featured-card {
+  position: relative;
+  border-radius: var(--r-2xl);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 220ms ease-out, box-shadow 220ms ease-out;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.featured-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+  border-color: rgba(53,132,228,0.2);
+}
+.featured-card.main-feat { grid-row: 1 / 3; }
+.featured-bg { position: absolute; inset: 0; }
+.featured-bg img { width:100%;height:100%;object-fit:cover; transition: transform 400ms ease; }
+.featured-card:hover .featured-bg img { transform: scale(1.04); }
+.featured-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(13,16,24,0.94) 0%, rgba(13,16,24,0.4) 50%, transparent 100%);
+}
+.featured-content {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: var(--sp-5);
+}
+.featured-genre {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--primary-light);
+  margin-bottom: var(--sp-2);
+}
+.featured-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 21px; font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.18;
+  margin-bottom: var(--sp-3);
+}
+.featured-card.sub-feat .featured-title {
+  font-size: 15px; margin-bottom: var(--sp-2);
+}
+.featured-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.btn-watch-sm {
+  height: 32px;
+  padding: 0 var(--sp-4);
+  background: var(--primary);
+  color: white;
+  font-size: 12px; font-weight: 600;
+  border-radius: var(--r-m);
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background 150ms;
+  margin-left: auto;
+  box-shadow: 0 2px 12px rgba(53,132,228,0.5);
+}
+.btn-watch-sm:hover { background: var(--primary-light); }
+
+/* ═══════════════════════════════════════════
+   ACCESS GATES
+   ═══════════════════════════════════════════ */
+.gates-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6);
+  max-width: 800px;
+}
+
+.access-gate {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-8) var(--sp-8) var(--sp-8);
+  position: relative;
+  overflow: hidden;
+}
+.access-gate::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+}
+.access-gate.teal-gate::before {
+  background: linear-gradient(90deg, var(--teal-dark), var(--teal), var(--teal-light));
+}
+.access-gate::after {
+  content: '';
+  position: absolute;
+  top: -100px; right: -80px;
+  width: 260px; height: 260px;
+  border-radius: var(--r-full);
+  background: radial-gradient(ellipse, var(--gold-muted) 0%, transparent 70%);
+  pointer-events: none;
+}
+.access-gate.teal-gate::after {
+  background: radial-gradient(ellipse, var(--teal-muted) 0%, transparent 70%);
+}
+
+.gate-icon {
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  background: var(--gold-muted);
+  border: 1px solid rgba(232,197,71,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  margin-bottom: var(--sp-5);
+}
+.teal-gate .gate-icon {
+  background: var(--teal-muted);
+  border-color: rgba(46,194,126,0.25);
+}
+.gate-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 19px; font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-2);
+}
+.gate-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--sp-5);
+}
+.gate-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: var(--sp-6);
+}
+.gate-price {
+  font-family: 'Sora', sans-serif;
+  font-size: 34px; font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.teal-gate .gate-price { color: var(--teal); }
+.gate-period {
+  font-size: 13px; color: var(--text-muted);
+}
+.gate-btn {
+  width: 100%; height: 46px;
+  border-radius: var(--r-l);
+  font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-2);
+  transition: transform 150ms, box-shadow 150ms;
+  margin-bottom: var(--sp-2);
+}
+.gate-btn:active { transform: scale(0.98); }
+.gate-btn-premium {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white;
+  box-shadow: 0 4px 18px rgba(53,132,228,0.45);
+}
+.gate-btn-premium:hover { box-shadow: 0 6px 24px rgba(53,132,228,0.6); transform: translateY(-1px); }
+.gate-btn-teal {
+  background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+  color: #062a17;
+  box-shadow: 0 4px 18px rgba(46,194,126,0.35);
+}
+.gate-btn-teal:hover { box-shadow: 0 6px 24px rgba(46,194,126,0.5); transform: translateY(-1px); }
+.gate-dismiss {
+  width: 100%; height: 38px;
+  background: transparent; color: var(--text-muted);
+  font-size: 13px; border-radius: var(--r-m);
+  display: flex; align-items: center; justify-content: center;
+  transition: color 150ms, background 150ms;
+}
+.gate-dismiss:hover { color: var(--text-secondary); background: var(--bg-raised); }
+
+/* ═══════════════════════════════════════════
+   MINI-PLAYER
+   ═══════════════════════════════════════════ */
+.mini-player {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 300;
+  background: rgba(26,30,45,0.95);
+  border-top: 1px solid var(--bg-border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.mini-progress {
+  height: 3px;
+  background: var(--bg-raised);
+  cursor: pointer;
+  position: relative;
+}
+.mini-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  width: 38%;
+  border-radius: 0;
+  transition: width 0.5s linear;
+}
+.mini-progress:hover .mini-progress-fill {
+  background: linear-gradient(90deg, var(--primary-light), var(--gold));
+}
+.mini-body {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-10);
+  gap: var(--sp-5);
+}
+.mini-thumb {
+  width: 46px; height: 46px;
+  border-radius: var(--r-m);
+  overflow: hidden;
+  flex: 0 0 46px;
+  background: var(--bg-raised);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.mini-thumb img { width:100%;height:100%;object-fit:cover; }
+.mini-info { flex: 1; min-width: 0; }
+.mini-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.mini-artist { font-size: 12px; color: var(--text-muted); }
+
+.mini-controls {
+  display: flex; align-items: center; gap: var(--sp-4);
+}
+.mini-ctrl-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r-full);
+  transition: color 150ms, background 150ms;
+}
+.mini-ctrl-btn:hover { color: var(--text-primary); background: var(--bg-raised); }
+.mini-play-btn {
+  width: 40px; height: 40px;
+  border-radius: var(--r-full);
+  background: var(--primary);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 14px rgba(53,132,228,0.5);
+  transition: background 150ms, transform 150ms;
+}
+.mini-play-btn:hover { background: var(--primary-light); transform: scale(1.08); }
+
+.mini-vol-wrap {
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.mini-vol-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 72px; height: 3px;
+  background: var(--bg-overlay);
+  border-radius: var(--r-full);
+  outline: none;
+  cursor: pointer;
+}
+.mini-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: var(--r-full);
+  background: var(--primary-light);
+  cursor: pointer;
+}
+
+svg.icon {
+  stroke: currentColor; fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--bg-border), transparent);
+  margin: var(--sp-12) 0;
+}
+
+/* ── Section animations ── */
+.section { opacity: 0; animation: fadeUp 450ms ease-out forwards; }
+.section:nth-child(1) { animation-delay: 80ms; }
+.section:nth-child(2) { animation-delay: 160ms; }
+.section:nth-child(3) { animation-delay: 230ms; }
+.section:nth-child(4) { animation-delay: 300ms; }
+.section:nth-child(5) { animation-delay: 370ms; }
+.section:nth-child(6) { animation-delay: 440ms; }
+.section:nth-child(7) { animation-delay: 510ms; }
+
+/* ── Footer ── */
+.footer {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--bg-border);
+  padding: var(--sp-12) var(--sp-10) var(--sp-8);
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: var(--sp-12);
+  max-width: 1480px;
+  margin: 0 auto;
+}
+.footer-brand-text {
+  font-size: 13px; line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 280px;
+  margin-top: var(--sp-4);
+}
+.footer-col-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-4);
+}
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: var(--sp-3); }
+.footer-links a { font-size: 13px; color: var(--text-secondary); transition: color 150ms; }
+.footer-links a:hover { color: var(--text-primary); }
+.footer-bottom {
+  border-top: 1px solid var(--bg-border);
+  padding: var(--sp-5) var(--sp-10);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--text-muted);
+  max-width: 1480px; margin: 0 auto;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════ TOPBAR ═══════ -->
+<header class="topbar" id="topbar">
+  <a href="#" class="logo">
+    <div class="logo-icon">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <polygon points="1,1 11,6 1,11" fill="white"/>
+      </svg>
+    </div>
+    Stream<span class="mg">MG</span>
+  </a>
+
+  <nav>
+    <ul class="nav-links">
+      <li><a href="#" class="active">Accueil</a></li>
+      <li><a href="#">Explorer</a></li>
+      <li><a href="#">Musique</a></li>
+      <li><a href="#">Tutoriels</a></li>
+      <li><a href="#">Fournisseurs</a></li>
+    </ul>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="search-pill">
+      <svg class="icon" width="13" height="13" viewBox="0 0 24 24" style="color:var(--text-muted);flex-shrink:0">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" placeholder="Rechercher…">
+    </div>
+
+    <button class="btn-notif" aria-label="Notifications">
+      <div class="notif-dot"></div>
+      <svg class="icon" width="18" height="18" viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+
+    <button class="btn-premium">★ Premium</button>
+
+    <div class="avatar">RN</div>
+  </div>
+</header>
+
+
+<!-- ═══════ HERO ═══════ -->
+<section class="hero">
+  <div class="hero-bg">
+    <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1800&q=85" alt="Concert live">
+  </div>
+  <div class="hero-gradient"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <div class="eyebrow-dot"></div>
+      <div class="eyebrow-line"></div>
+      Exclusivité de la semaine
+    </div>
+
+    <h1 class="hero-title">
+      L'Âme des<br><em>Hautes Terres</em>
+    </h1>
+
+    <p class="hero-desc">
+      Un voyage musical exceptionnel à travers le théâtre traditionnel malagasy.
+      Danses épiques, chants ancestraux, costumes des Hautes Terres — filmé en 4K Ultra HD.
+    </p>
+
+    <div class="hero-tags">
+      <span class="badge badge-premium">★ PREMIUM</span>
+      <span class="hero-tag">
+        <svg class="icon" width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        1h 58min
+      </span>
+      <span class="hero-tag">Documentaire musical</span>
+      <span class="hero-tag">4K · 2025</span>
+    </div>
+
+    <div class="hero-actions">
+      <button class="btn-hero-play">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+        Regarder maintenant
+      </button>
+      <button class="btn-hero-secondary">
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Plus d'infos
+      </button>
+    </div>
+  </div>
+
+  <!-- Poster cards right -->
+  <div class="hero-poster-area">
+    <div class="poster-card">
+      <div class="poster-img">
+        <img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=300&q=80" alt="Beko">
+        <div class="poster-gradient"></div>
+        <div class="poster-info">
+          <div class="poster-title">Beko — Rituels Sacrés</div>
+          <div class="poster-sub">55 min · Documentaire</div>
+        </div>
+      </div>
+    </div>
+    <div class="poster-card featured">
+      <div class="poster-img">
+        <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=360&q=80" alt="Hira Gasy">
+        <div class="poster-badge"><span class="badge badge-premium">★ Premium</span></div>
+        <div class="poster-gradient"></div>
+        <div class="poster-info">
+          <div class="poster-title">Hira Gasy — Live Tana</div>
+          <div class="poster-sub">2h 10min · Théâtre musical</div>
+        </div>
+      </div>
+    </div>
+    <div class="poster-card">
+      <div class="poster-img">
+        <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80" alt="Mahaleo">
+        <div class="poster-gradient"></div>
+        <div class="poster-info">
+          <div class="poster-title">Mahaleo — 50 ans</div>
+          <div class="poster-sub">3h 04min · Acoustic</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-scroll">
+    <span>Défiler</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="main">
+
+  <!-- ── Continuer à regarder ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">En cours</div>
+        <div class="section-title">Continuer à regarder</div>
+      </div>
+      <button class="btn-see-all">
+        Voir tout
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="continue-strip">
+
+      <div class="continue-card">
+        <div class="continue-thumb">
+          <img src="https://images.unsplash.com/photo-1558694440-03ade9215d7b?auto=format&fit=crop&w=200&q=75" alt="Baobab">
+          <div class="continue-play-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="continue-info">
+          <div class="continue-title">Baobab — Le Film</div>
+          <div class="continue-sub">Ep. 1 · 28 min restants</div>
+          <div class="continue-bar"><div class="continue-fill" style="width:55%"></div></div>
+        </div>
+      </div>
+
+      <div class="continue-card">
+        <div class="continue-thumb">
+          <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=200&q=75" alt="Ranomafana">
+          <div class="continue-play-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="continue-info">
+          <div class="continue-title">Forêts de Ranomafana</div>
+          <div class="continue-sub">Documentaire · 14 min restants</div>
+          <div class="continue-bar"><div class="continue-fill" style="width:80%"></div></div>
+        </div>
+      </div>
+
+      <div class="continue-card">
+        <div class="continue-thumb">
+          <img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=200&q=75" alt="Valiha">
+          <div class="continue-play-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="continue-info">
+          <div class="continue-title">Leçon 4 — Valiha Avancé</div>
+          <div class="continue-sub">Tutoriel · Leçon 4 / 8</div>
+          <div class="continue-bar"><div class="continue-fill" style="width:40%"></div></div>
+        </div>
+      </div>
+
+      <div class="continue-card">
+        <div class="continue-thumb">
+          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=200&q=75" alt="Cuisine">
+          <div class="continue-play-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="continue-info">
+          <div class="continue-title">Cuisine Malagasy — Les Bases</div>
+          <div class="continue-sub">Tutoriel · Leçon 9 / 10</div>
+          <div class="continue-bar"><div class="continue-fill" style="width:88%"></div></div>
+        </div>
+      </div>
+
+      <div class="continue-card">
+        <div class="continue-thumb">
+          <img src="https://images.unsplash.com/photo-1570742544137-3a469196c32b?auto=format&fit=crop&w=200&q=75" alt="Baobabs">
+          <div class="continue-play-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <div class="continue-info">
+          <div class="continue-title">Avenue des Baobabs</div>
+          <div class="continue-sub">Documentaire · 32 min restants</div>
+          <div class="continue-bar"><div class="continue-fill" style="width:62%"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Musique Traditionnelle ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">Patrimoine sonore</div>
+        <div class="section-title">Musique Traditionnelle</div>
+        <div class="section-sub">Hira Gasy · Salegy · Tsapiky · Beko</div>
+      </div>
+      <button class="btn-see-all">
+        Voir tout
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="carousel-wrap">
+      <div class="cards-row">
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=340&q=75" alt="Rossy">
+            <div class="card-badge"><span class="badge badge-free">Gratuit</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Rossy — Compilation 2024</div>
+            <div class="card-meta">Salegy · 48 min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=340&q=75" alt="Hira Gasy">
+            <div class="card-badge"><span class="badge badge-premium">★ Premium</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Troupe Rasolo — Hira Gasy</div>
+            <div class="card-meta">Hira Gasy · 2h 10min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=340&q=75" alt="Tsapiky">
+            <div class="card-badge"><span class="badge badge-free">Gratuit</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Tsapiky du Sud — Anthologie</div>
+            <div class="card-meta">Tsapiky · 1h 22min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=340&q=75" alt="Beko">
+            <div class="card-badge"><span class="badge badge-payant">4 900 Ar</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Beko — Rituels Sacrés</div>
+            <div class="card-meta">Beko · 55 min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=340&q=75" alt="Mahaleo">
+            <div class="card-badge"><span class="badge badge-premium">★ Premium</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Mahaleo — 50 ans</div>
+            <div class="card-meta">Acoustic · 3h 04min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=340&q=75" alt="Valiha">
+            <div class="card-badge"><span class="badge badge-free">Gratuit</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Valiha — Musique des Ancêtres</div>
+            <div class="card-meta">Traditionnel · 38 min</div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1619983081563-430f63602796?auto=format&fit=crop&w=340&q=75" alt="Percussions">
+            <div class="card-badge"><span class="badge badge-payant">3 200 Ar</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Percussions du Nord</div>
+            <div class="card-meta">Rythmes · 42 min</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Films & Séries ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">Cinéma local</div>
+        <div class="section-title">Films & Séries Malagasy</div>
+        <div class="section-sub">Productions locales 2024–2025</div>
+      </div>
+      <button class="btn-see-all">
+        Voir tout
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="carousel-wrap">
+      <div class="cards-row">
+
+        <div class="content-card content-card-wide">
+          <div class="card-thumb card-thumb-wide">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=520&q=75" alt="Ny Fiainana">
+            <div class="card-badge"><span class="badge badge-premium">★ Premium</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Ny Fiainana — Saison 1</div>
+            <div class="card-meta">Série · 12 épisodes</div>
+          </div>
+        </div>
+
+        <div class="content-card content-card-wide">
+          <div class="card-thumb card-thumb-wide">
+            <img src="https://images.unsplash.com/photo-1558694440-03ade9215d7b?auto=format&fit=crop&w=520&q=75" alt="Baobab">
+            <div class="card-badge"><span class="badge badge-payant">8 500 Ar</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Baobab — Le Film</div>
+            <div class="card-meta">Drame · 1h 48min</div>
+          </div>
+        </div>
+
+        <div class="content-card content-card-wide">
+          <div class="card-thumb card-thumb-wide">
+            <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=520&q=75" alt="Biodiversité">
+            <div class="card-badge"><span class="badge badge-free">Gratuit</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Madagascar — Biodiversité</div>
+            <div class="card-meta">Documentaire · 52 min</div>
+          </div>
+        </div>
+
+        <div class="content-card content-card-wide">
+          <div class="card-thumb card-thumb-wide">
+            <img src="https://images.unsplash.com/photo-1570742544137-3a469196c32b?auto=format&fit=crop&w=520&q=75" alt="Baobabs">
+            <div class="card-badge"><span class="badge badge-premium">★ Premium</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Avenue des Baobabs</div>
+            <div class="card-meta">Documentaire · 1h 10min</div>
+          </div>
+        </div>
+
+        <div class="content-card content-card-wide">
+          <div class="card-thumb card-thumb-wide">
+            <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=520&q=75" alt="Film malgache">
+            <div class="card-badge"><span class="badge badge-payant">5 900 Ar</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Rano sy Aina</div>
+            <div class="card-meta">Drame · 1h 32min</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tutoriels ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">Formation</div>
+        <div class="section-title">Tutoriels & Apprentissage</div>
+        <div class="section-sub">Langues · Musique · Artisanat · Culture</div>
+      </div>
+      <button class="btn-see-all">
+        Voir tout
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="carousel-wrap">
+      <div class="cards-row">
+
+        <div class="content-card" style="width:188px;">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=340&q=75" alt="Malgache A1">
+            <div class="card-badge"><span class="badge badge-tuto">Tutoriel</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Apprendre le Malgache A1</div>
+            <div class="card-meta">14 leçons · Gratuit</div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
+              <span class="progress-pct">65%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card" style="width:188px;">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=340&q=75" alt="Valiha">
+            <div class="card-badge"><span class="badge badge-tuto">Tutoriel</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Jouer de la Valiha — Débutants</div>
+            <div class="card-meta">8 leçons · Premium</div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+              <span class="progress-pct">20%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card" style="width:188px;">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=340&q=75" alt="Tissage">
+            <div class="card-badge"><span class="badge badge-tuto">Tutoriel</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Tissage Traditionnel Lamba</div>
+            <div class="card-meta">12 leçons · 6 200 Ar</div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+              <span class="progress-pct">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card" style="width:188px;">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=340&q=75" alt="Cuisine">
+            <div class="card-badge"><span class="badge badge-tuto">Tutoriel</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Cuisine Malagasy — Les Bases</div>
+            <div class="card-meta">10 leçons · Gratuit</div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div>
+              <span class="progress-pct">88%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card" style="width:188px;">
+          <div class="card-thumb">
+            <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=340&q=75" alt="Art">
+            <div class="card-badge"><span class="badge badge-tuto">Tutoriel</span></div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21" transform="translate(1,0)"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Art Malgache — Initiation</div>
+            <div class="card-meta">6 leçons · Premium</div>
+            <div class="progress-wrap">
+              <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+              <span class="progress-pct">33%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Documentaires à la Une ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">Sélection éditoriale</div>
+        <div class="section-title">Documentaires à la Une</div>
+        <div class="section-sub">Biodiversité · Histoire · Côtes & Océan</div>
+      </div>
+      <button class="btn-see-all">
+        Voir tout
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <div class="featured-grid">
+
+      <div class="featured-card main-feat">
+        <div class="featured-bg">
+          <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80" alt="Ranomafana">
+        </div>
+        <div class="featured-overlay"></div>
+        <div class="featured-content">
+          <div class="featured-genre">Nature & Biodiversité</div>
+          <div class="featured-title">Les Forêts Primaires<br>de Ranomafana</div>
+          <div class="featured-footer">
+            <span class="badge badge-free">Gratuit</span>
+            <span style="font-size:12px;color:var(--text-secondary);">52 min · 2024</span>
+            <button class="btn-watch-sm">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5,3 19,12 5,21"/></svg>
+              Regarder
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="featured-card sub-feat">
+        <div class="featured-bg">
+          <img src="https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=75" alt="Ranavalona">
+        </div>
+        <div class="featured-overlay"></div>
+        <div class="featured-content">
+          <div class="featured-genre">Histoire Malgache</div>
+          <div class="featured-title">Ranavalona — Reine des Rois</div>
+          <div class="featured-footer">
+            <span class="badge badge-premium">★ Premium</span>
+            <span style="font-size:11px;color:var(--text-secondary);">1h 24min</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="featured-card sub-feat">
+        <div class="featured-bg">
+          <img src="https://images.unsplash.com/photo-1559494007-9f5847c49d94?auto=format&fit=crop&w=600&q=75" alt="Nosy Be">
+        </div>
+        <div class="featured-overlay"></div>
+        <div class="featured-content">
+          <div class="featured-genre">Côtes & Océan</div>
+          <div class="featured-title">Récifs de Corail — Nosy Be</div>
+          <div class="featured-footer">
+            <span class="badge badge-payant">3 900 Ar</span>
+            <span style="font-size:11px;color:var(--text-secondary);">45 min</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Access Gates ── -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <div class="section-label">Composants UI</div>
+        <div class="section-title">Écrans d'accès</div>
+        <div class="section-sub">Gestion Premium & achat unitaire</div>
+      </div>
+    </div>
+
+    <div class="gates-row">
+
+      <!-- Gate Premium -->
+      <div class="access-gate">
+        <div class="gate-icon">★</div>
+        <div class="gate-title">Contenu Premium</div>
+        <div class="gate-desc">Ce contenu est réservé aux abonnés Premium. Débloquez l'accès au catalogue complet et aux documentaires exclusifs.</div>
+        <div class="gate-price-row">
+          <div class="gate-price">9 900</div>
+          <div class="gate-period">Ar / mois</div>
+        </div>
+        <div class="gate-btn gate-btn-premium">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          S'abonner à Premium
+        </div>
+        <button class="gate-dismiss">Pas maintenant</button>
+      </div>
+
+      <!-- Gate Achat unitaire -->
+      <div class="access-gate teal-gate">
+        <div class="gate-icon">🔒</div>
+        <div class="gate-title">Beko — Rituels Sacrés</div>
+        <div class="gate-desc">Achetez ce contenu pour un accès permanent, indépendant de votre abonnement. Une seule fois, pour toujours.</div>
+        <div class="gate-price-row">
+          <div class="gate-price">4 900</div>
+          <div class="gate-period">Ar · Accès permanent</div>
+        </div>
+        <div class="gate-btn gate-btn-teal">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" style="fill:rgba(10,26,18,0.4)"/></svg>
+          Acheter ce contenu
+        </div>
+        <button class="gate-dismiss">Peut-être plus tard</button>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="footer">
+    <div>
+      <a href="#" class="logo">
+        <div class="logo-icon">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <polygon points="1,1 11,6 1,11" fill="white"/>
+          </svg>
+        </div>
+        Stream<span class="mg">MG</span>
+      </a>
+      <p class="footer-brand-text">La première plateforme de streaming audiovisuel et éducatif dédiée au patrimoine culturel malgache. Découvrez, apprenez, partagez.</p>
+    </div>
+    <div>
+      <div class="footer-col-title">Catalogue</div>
+      <ul class="footer-links">
+        <li><a href="#">Films & Séries</a></li>
+        <li><a href="#">Musique Traditionnelle</a></li>
+        <li><a href="#">Documentaires</a></li>
+        <li><a href="#">Podcasts</a></li>
+        <li><a href="#">Tutoriels</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Compte</div>
+      <ul class="footer-links">
+        <li><a href="#">Mon profil</a></li>
+        <li><a href="#">Mes téléchargements</a></li>
+        <li><a href="#">Abonnement</a></li>
+        <li><a href="#">Espace Fournisseur</a></li>
+        <li><a href="#">Paramètres</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Plateforme</div>
+      <ul class="footer-links">
+        <li><a href="#">Application mobile</a></li>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Conditions d'utilisation</a></li>
+        <li><a href="#">Confidentialité</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
+    <span style="color:var(--primary-light);">Construit pour le patrimoine malagasy ❤</span>
+  </div>
+</footer>
+
+
+<!-- ═══════ MINI-PLAYER ═══════ -->
+<div class="mini-player">
+  <div class="mini-progress">
+    <div class="mini-progress-fill" id="progressFill"></div>
+  </div>
+  <div class="mini-body">
+    <div class="mini-thumb">
+      <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=100&q=75" alt="En cours">
+    </div>
+    <div class="mini-info">
+      <div class="mini-title">Troupe Rasolo — Hira Gasy Live</div>
+      <div class="mini-artist">Hira Gasy · 38:24 / 2:10:00</div>
+    </div>
+    <div class="mini-controls">
+      <button class="mini-ctrl-btn">
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24"><polygon points="19,20 9,12 19,4"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+      </button>
+      <button class="mini-play-btn" id="playBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none" id="playIcon">
+          <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+        </svg>
+      </button>
+      <button class="mini-ctrl-btn">
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+      </button>
+      <button class="mini-ctrl-btn">
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+      <div class="mini-vol-wrap">
+        <button class="mini-ctrl-btn">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </button>
+        <input type="range" class="mini-vol-slider" min="0" max="100" value="72">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Topbar scroll effect
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => {
+    topbar.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  // Play/pause toggle
+  let playing = true;
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  playBtn.addEventListener('click', () => {
+    playing = !playing;
+    playIcon.innerHTML = playing
+      ? `<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`
+      : `<polygon points="5,3 19,12 5,21" transform="translate(1,0)"/>`;
+  });
+
+  // Progress click
+  const progressBar = document.querySelector('.mini-progress');
+  const progressFill = document.getElementById('progressFill');
+  progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    progressFill.style.width = pct + '%';
+  });
+</script>
+
+</body>
+</html>

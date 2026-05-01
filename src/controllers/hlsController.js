@@ -46,8 +46,8 @@ const getHlsToken = async (req, res, next) => {
     // Injecter le token dans un cookie strictement lié au chemin de ce contenu
     res.cookie(`hlsToken_${contentId}`, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true, // Requis pour sameSite: 'none'
+      sameSite: 'none',
       path: `/hls/${contentId}`,
       maxAge: (parseInt(process.env.HLS_TOKEN_EXPIRY) || 600) * 1000
     });

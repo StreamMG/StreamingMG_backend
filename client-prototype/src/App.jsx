@@ -1,52 +1,59 @@
-import React from 'react';
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import VideoPlayer from './pages/VideoPlayer';
-import { LogOut } from 'lucide-react';
+import Layout from './components/Layout';
 
+/* ── Pages (Lazy Loaded) ── */
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Catalogue = lazy(() => import('./pages/Catalogue'));
+const VideoPlayerEnhanced = lazy(() => import('./pages/VideoPlayerEnhanced'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Provider = lazy(() => import('./pages/Provider'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Payment = lazy(() => import('./pages/Payment'));
+const Tutoriels = lazy(() => import('./pages/Tutoriels'));
+
+/**
+ * PrivateRoute — redirige vers /login si non authentifié
+ */
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 };
 
+/**
+ * Loader de secours (Suspense fallback)
+ */
+const PageLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-base)' }}>
+    <div className="loading-spinner" />
+  </div>
+);
+
 function App() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen">
-      {user && (
-        <header style={{ 
-          padding: '16px 24px', 
-          background: 'var(--bg-secondary)',
-          display: 'flex', 
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.05)'
-        }}>
-          <Link to="/" style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white' }}>
-            StreamMG<span style={{ color: 'var(--accent-color)' }}>.prototype</span>
-          </Link>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>
-              {user.username} <span className="badge" style={{background: user.role === 'premium' ? '#f59e0b' : 'var(--bg-tertiary)', marginLeft: 8}}>{user.role}</span>
-            </span>
-            <button onClick={logout} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
-              <LogOut size={18} /> Quitter
-            </button>
-          </div>
-        </header>
-      )}
-
-      <main className="container" style={{ paddingTop: user ? '40px' : '0', paddingBottom: '60px' }}>
+    <Layout>
+      <Suspense fallback={<PageLoader />}>
         <Routes>
+          {/* Auth — public */}
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-          <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/watch/:id" element={<PrivateRoute><VideoPlayer /></PrivateRoute>} />
+          <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+
+          {/* App — private */}
+          <Route path="/" element={<PrivateRoute><Catalogue /></PrivateRoute>} />
+          <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/provider" element={<PrivateRoute><Provider /></PrivateRoute>} />
+          <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
+          <Route path="/tutoriels" element={<PrivateRoute><Tutoriels /></PrivateRoute>} />
+          <Route path="/subscribe" element={<PrivateRoute><Payment /></PrivateRoute>} />
+          <Route path="/purchase" element={<PrivateRoute><Payment /></PrivateRoute>} />
         </Routes>
-      </main>
-    </div>
+      </Suspense>
+    </Layout>
   );
 }
 

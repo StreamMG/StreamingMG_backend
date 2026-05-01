@@ -30,8 +30,8 @@ const createRefreshToken = async (userId) => {
 const setRefreshCookie = (res, rawToken) => {
   res.cookie('refreshToken', rawToken, {
     httpOnly:  true,
-    secure:    process.env.NODE_ENV === 'production',
-    sameSite:  'strict',
+    secure:    true, // Requis pour sameSite: 'none'
+    sameSite:  'none',
     maxAge:    7 * 24 * 60 * 60 * 1000
   });
 };
@@ -183,7 +183,7 @@ const logout = async (req, res, next) => {
     }
 
     // Effacer le cookie
-    res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'strict' });
+    res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: 'none' });
 
     // TF-AUTH-05 : 200, doc RefreshToken supprimé
     return res.json({ message: 'Déconnecté avec succès' });
