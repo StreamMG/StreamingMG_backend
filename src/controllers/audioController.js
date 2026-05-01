@@ -58,9 +58,12 @@ exports.getWebAudioToken = async (req, res, next) => {
     });
 
     // ⚠️ CRITIQUE : Empêche le cache 304 qui ignorerait le Set-Cookie du token
-    // Sans ça, le navigateur répond 304 et n'enregistre jamais le cookie audioToken
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    // Express génère un ETag basé sur le body (toujours identique → 304).
+    // On force un ETag unique par requête pour rompre ce cycle.
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"audio-token-${Date.now()}-${Math.random().toString(36).slice(2)}"`);
 
     // ⚠️ On NE retourne PAS le token dans l'URL — il est dans le cookie httpOnly UNIQUEMENT
     // XDM intercepte les URLs, mais ne peut jamais lire les cookies httpOnly.

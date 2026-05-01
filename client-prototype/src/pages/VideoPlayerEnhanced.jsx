@@ -80,7 +80,8 @@ export default function VideoPlayerEnhanced() {
       } else {
         // Mode Navigateur Web : On utilise le token de streaming sécurisé (Anti-IDM)
         // Le token est dans un cookie httpOnly — XDM ne peut pas le copier.
-        const audioRes = await api.get(`/audio/${id}/web-token`);
+        // _t=timestamp : cache-buster pour éviter le 304 qui ferait ignorer Set-Cookie
+        const audioRes = await api.get(`/audio/${id}/web-token?_t=${Date.now()}`);
         const { streamUrl } = audioRes.data;
         // On concatène VITE_BASE_URL pour pointer vers le backend
         const fullUrl = `${import.meta.env.VITE_BASE_URL}${streamUrl}`;
