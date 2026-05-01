@@ -8,14 +8,19 @@ const fs      = require('fs');
 const hlsTokenMiddleware = require('../middlewares/hlsTokenizer.middleware');
 const rateLimit = require('express-rate-limit');
 
-// Limiteur Anti-Aspiration (Bloque IDM et les téléchargements parallèles)
-// Un lecteur normal (~5s par segment) fera environ 12 requêtes par minute.
-// IDM tentera d'en faire 16 à 32 d'un coup. S'il dépasse 30 requêtes par minute, on bloque.
+// Limiteur Anti-Aspiration plus agressif (Bloque XDM/IDM)
+// Un lecteur normal fait ~2 requêtes par 10 secondes (segments de 5s).
+// XDM/IDM tentent d'en lancer plusieurs par seconde.
 const antiAspirationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30, // Limite stricte de 30 segments (soit ~150s de vidéo) par minute par IP
+  windowMs: 10 * 1000, // 10 secondes
+  max: 5, // Limite stricte de 5 segments par 10s
+  keyGenerator: (req) => {
+    // Lie la limite à l'IP ET au token (ou cookie) pour éviter de bloquer tout un réseau NAT
+    const token = req.query.token || (req.cookies && req.cookies[`hlsToken_${req.params.contentId}`]) || 'anonymous';
+    return `${req.ip}_${token}`;
+  },
   message: { 
-    message: 'Téléchargement parallèle détecté (Anti-IDM). Ralentissez ou désactivez votre aspirateur de vidéo.', 
+    message: 'Téléchargement détecté (Anti-IDM/XDM). L\'utilisation d\'aspirateurs de vidéos est interdite.', 
     code: 'RATE_LIMIT_ANTI_DOWNLOAD' 
   },
   standardHeaders: true,
