@@ -78,17 +78,31 @@ export default function VideoPlayerEnhanced() {
           setPlayerReady(true);
         }
       } else {
-        // Mode Navigateur Web : On utilise le token de streaming sécurisé (Anti-IDM)
-        // Le token est dans un cookie httpOnly — XDM ne peut pas le copier.
-        // _t=timestamp : cache-buster pour éviter le 304 qui ferait ignorer Set-Cookie
+        // Mode Navigateur Web : Fetch sécurisé → Blob URL (Anti-IDM définitif)
+        // L'élément <audio> ne gère pas les cookies httpOnly fiablement.
+        // On utilise fetch() qui, lui, envoie les cookies correctement.
         const audioRes = await api.get(`/audio/${id}/web-token?_t=${Date.now()}`);
         const { streamUrl } = audioRes.data;
-        // On concatène VITE_BASE_URL pour pointer vers le backend
         const fullUrl = `${import.meta.env.VITE_BASE_URL}${streamUrl}`;
-        // ⚠️ CRITIQUE : crossOrigin doit être défini AVANT src
-        // Cela force le navigateur à inclure les cookies dans la requête média
-        videoRef.current.crossOrigin = 'use-credentials';
-        videoRef.current.src = fullUrl;
+
+        // fetch() avec credentials: 'include' → le cookie audioToken httpOnly est envoyé
+        const response = await fetch(fullUrl, {
+          credentials: 'include',
+          mode: 'cors',
+        });
+        if (!response.ok) throw new Error(`Erreur streaming audio: ${response.status}`);
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Libère le précédent blob pour éviter les fuites mémoire
+        if (videoRef.current._blobUrl) {
+          URL.revokeObjectURL(videoRef.current._blobUrl);
+        }
+        videoRef.current._blobUrl = blobUrl;
+        // Pas besoin de crossOrigin : le blob est local, aucun CORS
+        videoRef.current.removeAttribute('crossOrigin');
+        videoRef.current.src = blobUrl;
         setPlayerReady(true);
       }
     } catch (err) {
