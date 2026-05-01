@@ -57,7 +57,9 @@ exports.getWebAudioToken = async (req, res, next) => {
       maxAge: 600 * 1000
     });
 
-    return res.json({ streamUrl: `/api/audio/${id}/stream?token=${token}` });
+    // ⚠️ On NE retourne PAS le token dans l'URL — il est dans le cookie httpOnly UNIQUEMENT
+    // XDM intercepte les URLs, mais ne peut jamais lire les cookies httpOnly.
+    return res.json({ streamUrl: `/api/audio/${id}/stream` });
   } catch (err) {
     next(err);
   }
@@ -69,7 +71,9 @@ exports.getWebAudioToken = async (req, res, next) => {
 exports.streamWebAudio = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const token = req.query.token || (req.cookies && req.cookies[`audioToken_${id}`]);
+    // 🛡️ Token UNIQUEMENT depuis le cookie httpOnly — jamais depuis l'URL
+    // Cela rend l'URL non-rejoutable par XDM qui copie l'URL depuis les devtools.
+    const token = req.cookies && req.cookies[`audioToken_${id}`];
 
     if (!token) return res.status(403).json({ message: 'Token manquant', code: 'AUDIO_TOKEN_MISSING' });
 
@@ -128,9 +132,12 @@ exports.streamWebAudio = async (req, res, next) => {
       res.writeHead(206, head);
       file.pipe(res);
     } else {
+      // 🛡️ On ne révèle PAS la taille totale sans Range — empêche XDM de calculer les chunks parallèles
       const head = {
-        'Content-Length': fileSize,
         'Content-Type': 'audio/mpeg',
+        'Content-Disposition': 'inline',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Content-Type-Options': 'nosniff',
       };
       res.writeHead(200, head);
       fs.createReadStream(absolutePath).pipe(res);

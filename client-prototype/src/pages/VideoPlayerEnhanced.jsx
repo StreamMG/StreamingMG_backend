@@ -79,10 +79,14 @@ export default function VideoPlayerEnhanced() {
         }
       } else {
         // Mode Navigateur Web : On utilise le token de streaming sécurisé (Anti-IDM)
+        // Le token est dans un cookie httpOnly — XDM ne peut pas le copier.
         const audioRes = await api.get(`/audio/${id}/web-token`);
         const { streamUrl } = audioRes.data;
-        // On concatène VITE_BASE_URL pour que le lecteur HTML5 aille taper le backend
+        // On concatène VITE_BASE_URL pour pointer vers le backend
         const fullUrl = `${import.meta.env.VITE_BASE_URL}${streamUrl}`;
+        // ⚠️ CRITIQUE : crossOrigin doit être défini AVANT src
+        // Cela force le navigateur à inclure les cookies dans la requête média
+        videoRef.current.crossOrigin = 'use-credentials';
         videoRef.current.src = fullUrl;
         setPlayerReady(true);
       }
