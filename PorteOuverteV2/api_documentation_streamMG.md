@@ -432,36 +432,57 @@ Le lecteur vidéo est protégé par HLS avec tokens signés. Aucun fichier `.mp4
 
 ## 🎵 Écran : Lecteur Audio
 
-L'audio est servi directement (pas de HLS). L'accès est contrôlé par `checkAccess`. Le mini-player reste visible lors de la navigation.
+L'architecture du streaming audio est divisée en deux parties pour garantir une compatibilité optimale sur mobile et empêcher les téléchargements illicites (anti-IDM/XDM) sur les navigateurs Web. L'accès est contrôlé par le middleware `checkAccess`.
 
 ---
 
-### 1. Obtenir l'URL de lecture audio
+### 1. Obtenir l'URL de lecture (Mobile Uniquement)
 
-- **Description :** Vérifie les droits et retourne une URL signée temporaire (15 min) vers le fichier audio. Utilisée par `expo-av` (mobile) et `react-player` (web).
+- **Description :** Vérifie les droits et retourne le chemin d'accès relatif au fichier audio physique. Utilisée **exclusivement par `expo-av`** (mobile).
 - **Requête :** `GET /audio/:id/url`
-- **Accès :** JWT + `checkAccess`
+- **Accès :** JWT optionnel + `checkAccess`
 
 **Réponse (200 OK) :**
 ```json
 {
-  "audioUrl": "https://api.streamMG.railway.app/uploads/audio/mora_mora_e1f4a.mp3?expires=...&sig=...",
-  "expiresIn": 900,
-  "metadata": {
-    "title": "Mora Mora",
-    "artist": "Tarika Sammy",
-    "album": "Novy",
-    "duration": 243,
-    "coverArt": "/uploads/thumbnails/mora_mora_e1f4a.jpg"
-  }
+  "url": "/uploads/audio/mora_mora_e1f4a.mp3"
 }
 ```
-
-> `coverArt` correspond à la pochette extraite des métadonnées ID3 si disponible, sinon renvoie le champ `thumbnail` du contenu.
 
 **Erreurs :**
 - `403` — Même format que le lecteur vidéo (`reason`, `price`)
 - `404` — `{ "message": "Contenu audio introuvable", "code": "AUDIO_NOT_FOUND" }`
+
+---
+
+### 2. Obtenir le Token de Streaming (Web Navigateur Uniquement)
+
+- **Description :** Génère un token cryptographique (HMAC) lié à l'IP et au navigateur (Fingerprint) pour sécuriser l'accès au fichier audio, prévenant l'utilisation d'aspirateurs de vidéos comme IDM. Le token est également injecté dans un cookie `SameSite=None`.
+- **Requête :** `GET /audio/:id/web-token`
+- **Accès :** JWT optionnel + `checkAccess`
+
+**Réponse (200 OK) :**
+```json
+{
+  "streamUrl": "/api/audio/65f3a2b4c8e9d1234567890b/stream?token=eyJhbGci..."
+}
+```
+
+---
+
+### 3. Stream Sécurisé par Morceaux (Web Navigateur Uniquement)
+
+- **Description :** Stream le fichier audio de manière sécurisée en supportant les requêtes de `Range` (HTTP 206 Partial Content) pour permettre d'avancer/reculer. Vérifie strictement le fingerprint. 
+- **Rate Limit Anti-Aspiration :** Limité à 15 requêtes/minute par token+IP.
+- **Requête :** `GET /audio/:id/stream?token=...`
+- **Accès :** Token Web Audio valide + Fingerprint correspondant
+
+**Réponse (206 Partial Content ou 200 OK) :**
+Flux binaire audio (`audio/mpeg`).
+
+**Erreurs :**
+- `403` — `{ "message": "Signature audio invalide ou expirée", "code": "AUDIO_TOKEN_INVALID" }` ou `AUDIO_FINGERPRINT_MISMATCH`
+- `429` — `{ "message": "Téléchargement détecté (Anti-IDM/XDM)...", "code": "RATE_LIMIT_ANTI_DOWNLOAD" }`
 
 ---
 
