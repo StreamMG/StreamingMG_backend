@@ -57,6 +57,11 @@ exports.getWebAudioToken = async (req, res, next) => {
       maxAge: 600 * 1000
     });
 
+    // ⚠️ CRITIQUE : Empêche le cache 304 qui ignorerait le Set-Cookie du token
+    // Sans ça, le navigateur répond 304 et n'enregistre jamais le cookie audioToken
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+
     // ⚠️ On NE retourne PAS le token dans l'URL — il est dans le cookie httpOnly UNIQUEMENT
     // XDM intercepte les URLs, mais ne peut jamais lire les cookies httpOnly.
     return res.json({ streamUrl: `/api/audio/${id}/stream` });
