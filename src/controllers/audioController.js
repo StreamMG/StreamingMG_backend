@@ -107,7 +107,16 @@ exports.streamWebAudio = async (req, res, next) => {
     if (range) {
       const parts = range.replace(/bytes=/, "").split("-");
       const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      let end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      // 🛡️ ANTI-ASPIRATION (IDM/XDM) : Forcer un découpage de la piste (ex: 500 KB max)
+      // Cela oblige le client à faire plusieurs requêtes. Les lecteurs légitimes liront au fur et à mesure.
+      // IDM tentera de tout aspirer d'un coup et se fera attraper par le Rate Limiter.
+      const CHUNK_SIZE = 500 * 1024; // 500 KB
+      if (end - start >= CHUNK_SIZE) {
+        end = start + CHUNK_SIZE - 1;
+      }
+
       const chunksize = (end - start) + 1;
       const file = fs.createReadStream(absolutePath, { start, end });
       const head = {

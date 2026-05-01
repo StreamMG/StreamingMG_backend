@@ -15,11 +15,12 @@ router.get('/:id/url', authOptional, checkAccess, audioController.getAudioUrl);
 router.get('/:id/web-token', authOptional, checkAccess, audioController.getWebAudioToken);
 
 // Limiteur Anti-Aspiration (Bloque XDM/IDM)
-// 15 requêtes max par minute. Un lecteur audio va généralement faire 2 à 5 requêtes de buffer.
+// Avec le découpage forcé (500 KB/chunk), une musique de 4MB nécessite ~8 requêtes.
+// Un lecteur normal demandera un chunk toutes les ~20s. XDM/IDM les demandera tous d'un coup.
 const rateLimit = require('express-rate-limit');
 const audioAspirationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 15, // 15 requêtes max pour le streaming par IP
+  windowMs: 10 * 1000, // Fenêtre de 10 secondes
+  max: 4, // Bloque au-delà de 4 requêtes par 10s
   keyGenerator: (req) => {
     const token = req.query.token || (req.cookies && req.cookies[`audioToken_${req.params.id}`]) || 'anonymous';
     return `${req.ip}_${token}`;
