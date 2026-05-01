@@ -78,8 +78,11 @@ export default function VideoPlayerEnhanced() {
           setPlayerReady(true);
         }
       } else {
-        const audioRes = await api.get(`/audio/${id}/url`);
-        const fullUrl = `${import.meta.env.VITE_BASE_URL}${audioRes.data.url}`;
+        // Mode Navigateur Web : On utilise le token de streaming sécurisé (Anti-IDM)
+        const audioRes = await api.get(`/audio/${id}/web-token`);
+        const { streamUrl } = audioRes.data;
+        // On concatène VITE_BASE_URL pour que le lecteur HTML5 aille taper le backend
+        const fullUrl = `${import.meta.env.VITE_BASE_URL}${streamUrl}`;
         videoRef.current.src = fullUrl;
         setPlayerReady(true);
       }
