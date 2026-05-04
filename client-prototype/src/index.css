@@ -503,3 +503,42 @@ a:hover .continue-thumb-img {
 /* ── Image fix: block display ── */
 img { display: block; }
 
+/* ── RESPONSIVENESS (Mobile & Tablet) ── */
+@media (max-width: 1024px) {
+  .hero-title { font-size: 38px; }
+  .topbar { padding: 0 var(--sp-4); }
+  .main { padding: var(--sp-6) var(--sp-4) var(--sp-12); }
+  .cards-row > * { flex: 0 0 150px; }
+}
+
+@media (max-width: 768px) {
+  .hero { height: auto; padding: var(--sp-8) 0; min-height: 300px; border-radius: var(--radius-m); }
+  .hero-title { font-size: 28px; }
+  .hero-desc { font-size: 14px; }
+  .hero-content { padding: 0 var(--sp-4); }
+  
+  .topbar { height: 56px; gap: var(--sp-3); overflow-x: auto; scrollbar-width: none; }
+  .topbar::-webkit-scrollbar { display: none; }
+  .topbar nav ul { gap: var(--sp-1); }
+  .topbar nav ul li a { font-size: 13px; padding: 4px 8px; }
+  
+  .container { padding: 0 16px; }
+  .section-title { font-size: 20px; }
+  .grid-cols-3 { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--sp-4); }
+  .cards-row > * { flex: 0 0 130px; }
+  
+  /* Player responsiveness overrides */
+  .player-wrapper { padding: 16px !important; }
+  .audio-overlay { flex-direction: column !important; text-align: center; gap: 16px !important; justify-content: center; }
+  .audio-overlay img { width: 140px !important; height: 140px !important; border-radius: 50% !important; animation: spin 4s linear infinite; }
+  .audio-overlay img.paused { animation-play-state: paused; }
+  .controls-overlay { padding: 16px 12px 12px !important; }
+  .controls-row { flex-wrap: wrap !important; justify-content: center !important; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 24px; }
+  .topbar { padding: 0 var(--sp-2); }
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+  .main { padding: var(--sp-4) var(--sp-2) var(--sp-12); }
+}

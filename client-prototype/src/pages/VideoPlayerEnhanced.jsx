@@ -220,7 +220,7 @@ export default function VideoPlayerEnhanced() {
   );
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
+    <div className="player-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
       {/* Back */}
       <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
         <ArrowLeft size={16} /> Retour au catalogue
@@ -239,11 +239,11 @@ export default function VideoPlayerEnhanced() {
         onClick={togglePlay}
       >
         {content?.type === 'audio' ? (
-          <div style={{
+          <div className="audio-overlay" style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: '24px', padding: '24px',
             background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-raised))'
           }}>
-            <img src={getImageUrl(content.thumbnail)} alt="" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+            <img src={getImageUrl(content.thumbnail)} alt="" className={isPlaying ? '' : 'paused'} style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 700 }}>{content.title}</div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{content.category}</div>
@@ -289,7 +289,7 @@ export default function VideoPlayerEnhanced() {
         )}
 
         {/* Controls overlay */}
-        <div style={{
+        <div className="controls-overlay" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
           padding: '32px 20px 16px',
@@ -308,7 +308,7 @@ export default function VideoPlayerEnhanced() {
           </div>
 
           {/* Controls row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="controls-row" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Play/Pause */}
             <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px' }}>
               {isPlaying ? <Pause size={22} /> : <Play size={22} fill="white" />}
