@@ -67,7 +67,12 @@ export default function VideoPlayerEnhanced() {
           const hls = new Hls({
             xhrSetup: function (xhr, url) {
               xhr.withCredentials = true;
-            }
+            },
+            // 🚀 Optimisation Vidéo (HLS) :
+            maxBufferLength: 30,       // Garde max 30s de vidéo en avance (évite le gâchis de data)
+            maxMaxBufferLength: 60,    // Hard limite à 60s
+            maxBufferSize: 50 * 1000 * 1000, // Limite la RAM à 50MB
+            enableWorker: true,        // Utilise un Web Worker pour libérer le thread principal
           });
           hlsRef.current = hls;
           hls.loadSource(fullUrl);
@@ -78,31 +83,21 @@ export default function VideoPlayerEnhanced() {
           setPlayerReady(true);
         }
       } else {
-        // Mode Navigateur Web : Fetch sécurisé → Blob URL (Anti-IDM définitif)
-        // L'élément <audio> ne gère pas les cookies httpOnly fiablement.
-        // On utilise fetch() qui, lui, envoie les cookies correctement.
+        // L'élément <audio> gérera les cookies si on utilise crossOrigin="use-credentials"
+        // Cela permet de streamer le fichier directement (indispensable car le backend limite la vitesse à 150KB/s)
         const audioRes = await api.get(`/audio/${id}/web-token?_t=${Date.now()}`);
         const { streamUrl } = audioRes.data;
         const fullUrl = `${import.meta.env.VITE_BASE_URL}${streamUrl}`;
 
-        // fetch() avec credentials: 'include' → le cookie audioToken httpOnly est envoyé
-        const response = await fetch(fullUrl, {
-          credentials: 'include',
-          mode: 'cors',
-        });
-        if (!response.ok) throw new Error(`Erreur streaming audio: ${response.status}`);
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Libère le précédent blob pour éviter les fuites mémoire
+        // Libère le précédent blob (si existant)
         if (videoRef.current._blobUrl) {
           URL.revokeObjectURL(videoRef.current._blobUrl);
+          videoRef.current._blobUrl = null;
         }
-        videoRef.current._blobUrl = blobUrl;
-        // Pas besoin de crossOrigin : le blob est local, aucun CORS
-        videoRef.current.removeAttribute('crossOrigin');
-        videoRef.current.src = blobUrl;
+        
+        // 🚀 Optimisation Audio : Stream direct avec cookies
+        videoRef.current.crossOrigin = 'use-credentials';
+        videoRef.current.src = fullUrl;
         setPlayerReady(true);
       }
     } catch (err) {
