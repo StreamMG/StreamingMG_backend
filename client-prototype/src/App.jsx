@@ -13,6 +13,7 @@ const Provider = lazy(() => import('./pages/Provider'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Payment = lazy(() => import('./pages/Payment'));
 const Tutoriels = lazy(() => import('./pages/Tutoriels'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 /**
  * PrivateRoute — redirige vers /login si non authentifié
@@ -20,6 +21,16 @@ const Tutoriels = lazy(() => import('./pages/Tutoriels'));
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
+};
+
+/**
+ * RoleRoute — redirige vers /404 si le rôle n'est pas autorisé
+ */
+const RoleRoute = ({ children, allowedRoles }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  if (!allowedRoles.includes(user.role)) return <Navigate to="/404" />;
+  return children;
 };
 
 /**
@@ -46,11 +57,18 @@ function App() {
           <Route path="/" element={<PrivateRoute><Catalogue /></PrivateRoute>} />
           <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path="/provider" element={<PrivateRoute><Provider /></PrivateRoute>} />
-          <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
+          
+          {/* Protected par Rôles */}
+          <Route path="/provider" element={<RoleRoute allowedRoles={['provider', 'admin']}><Provider /></RoleRoute>} />
+          <Route path="/admin" element={<RoleRoute allowedRoles={['admin']}><Admin /></RoleRoute>} />
+          
           <Route path="/tutoriels" element={<PrivateRoute><Tutoriels /></PrivateRoute>} />
           <Route path="/subscribe" element={<PrivateRoute><Payment /></PrivateRoute>} />
           <Route path="/purchase" element={<PrivateRoute><Payment /></PrivateRoute>} />
+          
+          {/* 404 Catch-all */}
+          <Route path="/404" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/404" />} />
         </Routes>
       </Suspense>
     </Layout>
