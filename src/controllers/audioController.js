@@ -31,6 +31,33 @@ exports.getAudioUrl = async (req, res, next) => {
 const { generateFingerprint, generateHlsToken, verifyHlsToken } = require('../utils/crypto.utils');
 const fs = require('fs');
 const path = require('path');
+const { Transform } = require('stream');
+
+// 🛡️ ANTI-ASPIRATION: Stream throttler
+class ThrottleStream extends Transform {
+  constructor(bytesPerSecond) {
+    super();
+    this.bps = bytesPerSecond;
+    this.lastTime = Date.now();
+    this.bytesPassed = 0;
+  }
+
+  _transform(chunk, encoding, callback) {
+    this.bytesPassed += chunk.length;
+    const expectedElapsed = (this.bytesPassed / this.bps) * 1000;
+    const elapsed = Date.now() - this.lastTime;
+
+    if (elapsed < expectedElapsed) {
+      setTimeout(() => {
+        this.push(chunk);
+        callback();
+      }, expectedElapsed - elapsed);
+    } else {
+      this.push(chunk);
+      callback();
+    }
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
 //  GET /api/audio/:id/web-token (POUR NAVIGATEUR UNIQUEMENT)
@@ -138,7 +165,10 @@ exports.streamWebAudio = async (req, res, next) => {
         'Content-Type': 'audio/mpeg',
       };
       res.writeHead(206, head);
-      file.pipe(res);
+      
+      // Limite la vitesse à ~150 KB/s (largement suffisant pour l'audio haute qualité)
+      const throttler = new ThrottleStream(150 * 1024);
+      file.pipe(throttler).pipe(res);
     } else {
       // 🛡️ On ne révèle PAS la taille totale sans Range — empêche XDM de calculer les chunks parallèles
       const head = {
@@ -148,7 +178,9 @@ exports.streamWebAudio = async (req, res, next) => {
         'X-Content-Type-Options': 'nosniff',
       };
       res.writeHead(200, head);
-      fs.createReadStream(absolutePath).pipe(res);
+      // Limite la vitesse globale si pas de range
+      const throttler = new ThrottleStream(150 * 1024);
+      fs.createReadStream(absolutePath).pipe(throttler).pipe(res);
     }
   } catch (err) {
     next(err);

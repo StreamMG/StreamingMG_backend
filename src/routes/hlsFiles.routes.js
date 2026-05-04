@@ -72,7 +72,16 @@ router.use((req, res, next) => {
   // On utilise req.url pour que static sache quel fichier (.m3u8 ou .ts) chercher dans hlsPath
   express.static(hlsPath, {
     dotfiles: 'deny',
-    fallthrough: true // Permet de passer au middleware suivant (ou 404) si le fichier n'existe pas
+    fallthrough: true, // Permet de passer au middleware suivant (ou 404) si le fichier n'existe pas
+    setHeaders: (res, pathStr) => {
+      if (pathStr.endsWith('.m3u8')) {
+        // Ne jamais cacher le manifest
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      } else if (pathStr.endsWith('.ts')) {
+        // Optimisation vidéo: cacher les segments (immuables) pour fluidifier la lecture / retours en arrière
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }
   })(req, res, next);
 });
 
