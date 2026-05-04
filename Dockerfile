@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
-# Install Nginx
-RUN apk add --no-cache nginx
+# Install Nginx and FFmpeg
+RUN apk add --no-cache nginx ffmpeg
 
 # Set working directory
 WORKDIR /app
