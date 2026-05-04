@@ -68,7 +68,10 @@ export default function VideoPlayerEnhanced() {
             xhrSetup: function (xhr, url) {
               xhr.withCredentials = true;
             },
-            // 🚀 Optimisation Vidéo (HLS) :
+            // 🚀 Optimisation Vidéo (HLS) - TTFF (Time To First Frame)
+            startLevel: -1,            // Démarre sur la résolution la plus basse pour lancer la lecture instantanément
+            capLevelToPlayerSize: true,// Ne télécharge jamais du 4K si le lecteur fait 800px de large (économie massive)
+            lowLatencyMode: true,      // Réduit la latence de démarrage
             maxBufferLength: 30,       // Garde max 30s de vidéo en avance (évite le gâchis de data)
             maxMaxBufferLength: 60,    // Hard limite à 60s
             maxBufferSize: 50 * 1000 * 1000, // Limite la RAM à 50MB
@@ -97,6 +100,7 @@ export default function VideoPlayerEnhanced() {
         
         // 🚀 Optimisation Audio : Stream direct avec cookies
         videoRef.current.crossOrigin = 'use-credentials';
+        videoRef.current.preload = 'auto'; // Lance le buffer en arrière-plan dès l'assignation de l'URL
         videoRef.current.src = fullUrl;
         setPlayerReady(true);
       }
@@ -354,7 +358,7 @@ export default function VideoPlayerEnhanced() {
           </div>
         </div>
 
-        <audio ref={content?.type === 'audio' ? videoRef : undefined} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+        <audio ref={content?.type === 'audio' ? videoRef : undefined} preload="auto" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
       </div>
 
       {/* Info section */}
