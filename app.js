@@ -47,16 +47,21 @@ app.use(activityLogger);
 const allowedOrigins = (
   process.env.ALLOWED_ORIGINS || "http://localhost:5173"
 ).split(",");
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origin (Postman, mobile)
+      // 1. Autoriser les requêtes sans origin (Postman, mobile)
       if (!origin) return callback(null, true);
 
-      // Nettoyer l'origine (enlever le slash final)
+      // 2. Si le joker "*" est présent dans le .env, on autorise tout
+      if (allowedOrigins.includes("*")) {
+        return callback(null, true);
+      }
+
       const cleanOrigin = origin.replace(/\/$/, "");
 
-      // Check si localhost ou inclus dans allowedOrigins
+      // 3. Check si localhost ou inclus dans allowedOrigins
       if (
         cleanOrigin.includes("localhost") ||
         cleanOrigin.includes("127.0.0.1") ||
@@ -71,7 +76,6 @@ app.use(
     credentials: true,
   }),
 );
-
 // ── Rate limiting ──
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
