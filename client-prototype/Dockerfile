@@ -5,6 +5,18 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# 🚀 FIX RENDER: Vite "cuisson" les variables au build time.
+# Il faut déclarer les ARGs pour que Docker puisse les récupérer.
+ARG VITE_API_URL
+ARG VITE_BASE_URL
+ARG VITE_STRIPE_PUBLIC_KEY
+
+# Convertir les ARGs en variables d'environnement (ENV) pour le process Vite
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_BASE_URL=$VITE_BASE_URL
+ENV VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
+
 RUN npm run build
 
 # Serve with Nginx
