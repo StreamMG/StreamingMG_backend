@@ -16,13 +16,14 @@ const generateJwt = (user) => jwt.sign(
   { expiresIn: process.env.JWT_EXPIRY || '15m' }
 );
 
-const createRefreshToken = async (userId) => {
+const createRefreshToken = async (userId, platform = 'web') => {
   const rawToken  = crypto.randomBytes(32).toString('hex');
   const tokenHash = await bcrypt.hash(rawToken, 12);
+  const days = platform === 'mobile' ? 30 : 7;
   await RefreshToken.create({
     userId,
     tokenHash,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)  // 7 jours
+    expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
   });
   return rawToken;
 };
@@ -55,7 +56,8 @@ const register = async (req, res, next) => {
     const user = await User.create({ username, email, passwordHash });
 
     const token    = generateJwt(user);
-    const rawToken = await createRefreshToken(user._id);
+    const platform = req.headers['x-platform'] || 'web';
+    const rawToken = await createRefreshToken(user._id, platform);
 
     setRefreshCookie(res, rawToken);
 
@@ -95,7 +97,8 @@ const login = async (req, res, next) => {
     }
 
     const token    = generateJwt(user);
-    const rawToken = await createRefreshToken(user._id);
+    const platform = req.headers['x-platform'] || 'web';
+    const rawToken = await createRefreshToken(user._id, platform);
 
     setRefreshCookie(res, rawToken);
 
@@ -147,8 +150,9 @@ const refresh = async (req, res, next) => {
     }
 
     // Générer nouveau JWT + nouveau refresh token
+    const platform    = req.headers['x-platform'] || 'web';
     const newJwt      = generateJwt(user);
-    const newRawToken = await createRefreshToken(user._id);
+    const newRawToken = await createRefreshToken(user._id, platform);
 
     setRefreshCookie(res, newRawToken);
 
