@@ -306,7 +306,7 @@ const Provider = () => {
                     </div>
                   </div>
                   {thumbnailPreview && (
-                    <div style={{ width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--bg-border)', flexShrink: 0 }}>
+                    <div style={{ width: '100px', aspectRatio: '5/7', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--bg-border)', flexShrink: 0 }}>
                       <img src={thumbnailPreview} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
@@ -346,10 +346,10 @@ const Provider = () => {
             <button className="btn btn-primary" onClick={() => setShowUploadForm(true)} style={{ borderRadius: '12px', margin: '0 auto' }}>Ajouter un contenu</button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
             {contents.map(c => (
               <div key={c._id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ position: 'relative', aspectRatio: '16/9' }}>
+                <div style={{ position: 'relative', aspectRatio: '5/7' }}>
                   <img src={imgUrl(c.thumbnail)} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', top: '8px', right: '8px' }}>{getAccessBadge(c)}</div>
                   <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
