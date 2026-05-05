@@ -5,6 +5,8 @@ import {
   Image, DollarSign, Star, Clock, BarChart3, Settings 
 } from 'lucide-react';
 import api from '../api';
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '../utils/cropImage';
 
 const Provider = () => {
   const [contents, setContents] = useState([]);
@@ -25,6 +27,13 @@ const Provider = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
+
+  // ── Cropper States ──
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const categories = ['salegy', 'hira_gasy', 'tsapiky', 'beko', 'film', 'documentaire', 'podcast', 'tutoriel', 'autre'];
   const types = ['video', 'audio'];
@@ -139,6 +148,23 @@ const Provider = () => {
     });
     setEditingContent(null);
     setThumbnailPreview(null);
+  };
+
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleSaveCrop = async () => {
+    try {
+      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const croppedFile = new File([croppedImageBlob], "thumbnail.jpg", { type: "image/jpeg" });
+      setFormData({...formData, thumbnail: croppedFile});
+      setThumbnailPreview(URL.createObjectURL(croppedFile));
+      setShowCropper(false);
+      setImageToCrop(null);
+    } catch (e) {
+      console.error('Erreur lors du recadrage:', e);
+    }
   };
 
   const formatPrice = (amount) => {
@@ -299,10 +325,10 @@ const Provider = () => {
                       <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" onChange={e => {
                         const file = e.target.files[0];
                         if (file) {
-                          setFormData({...formData, thumbnail: file});
-                          setThumbnailPreview(URL.createObjectURL(file));
+                          setImageToCrop(URL.createObjectURL(file));
+                          setShowCropper(true);
                         }
-                      }} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
+                      }} required={!editingContent && !formData.thumbnail} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
                     </div>
                   </div>
                   {thumbnailPreview && (
@@ -382,6 +408,37 @@ const Provider = () => {
           </div>
         )}
       </section>
+
+      {/* ── Modal de recadrage (Cropper) ── */}
+      {showCropper && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', height: '60vh', background: '#000', borderRadius: '16px', overflow: 'hidden' }}>
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={5 / 7}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div style={{ marginTop: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <input 
+              type="range" 
+              value={zoom} 
+              min={1} 
+              max={3} 
+              step={0.1} 
+              aria-label="Zoom" 
+              onChange={(e) => setZoom(Number(e.target.value))} 
+              style={{ width: '150px' }}
+            />
+            <button className="btn btn-secondary" onClick={() => { setShowCropper(false); setImageToCrop(null); }}>Annuler</button>
+            <button className="btn btn-primary" onClick={handleSaveCrop}>Recadrer et valider</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
