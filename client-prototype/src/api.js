@@ -24,6 +24,7 @@ api.interceptors.response.use(
         const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {}, { withCredentials: true });
         localStorage.setItem('token', res.data.token);
         api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        originalRequest.headers['Authorization'] = `Bearer ${res.data.token}`;
         return api(originalRequest);
       } catch (err) {
         localStorage.removeItem('token');

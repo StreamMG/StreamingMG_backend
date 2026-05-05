@@ -53,9 +53,11 @@ function App() {
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
 
+          {/* App — public & private mixes */}
+          <Route path="/" element={<Catalogue />} />
+          <Route path="/watch/:id" element={<VideoPlayerEnhanced />} />
+          
           {/* App — private */}
-          <Route path="/" element={<PrivateRoute><Catalogue /></PrivateRoute>} />
-          <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           
           {/* Protected par Rôles */}
