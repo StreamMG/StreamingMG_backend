@@ -54,8 +54,8 @@ export default function Footer() {
         <div>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '16px' }}>
             <img
-              src="/streammg_logo_mada_1777321847119.png"
-              alt="StreamMG"
+              src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png"
+              alt="StreamMG Logo"
               style={{ width: '30px', height: '30px', objectFit: 'contain' }}
             />
             <span style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -138,7 +138,7 @@ export default function Footer() {
         fontSize: '12px',
         color: 'var(--text-muted)',
       }}>
-        <span>© 2025 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
+        <span>© 2026 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
         <span style={{ color: 'var(--primary-light)' }}>Construit pour le patrimoine malagasy ❤</span>
       </div>
     </footer>

@@ -55,8 +55,8 @@ export default function Login() {
           {/* Logo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', gap: '12px' }}>
             <img
-              src="/streammg_logo_mada_1777321847119.png"
-              alt="StreamMG"
+              src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png"
+              alt="StreamMG Logo"
               style={{ width: '52px', height: '52px', objectFit: 'contain' }}
             />
             <span style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>

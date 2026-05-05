@@ -69,7 +69,7 @@ const Register = () => {
         }}>
           {/* Logo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', gap: '10px' }}>
-            <img src="/streammg_logo_mada_1777321847119.png" alt="StreamMG" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+            <img src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" alt="StreamMG Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
             <span style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 800 }}>
               Stream<span style={{ color: 'var(--primary)' }}>MG</span>
             </span>

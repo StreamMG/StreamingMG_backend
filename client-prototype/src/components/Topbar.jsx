@@ -75,20 +75,11 @@ export default function Topbar() {
           flexShrink: 0,
         }}
       >
-        <div style={{
-          width: '30px',
-          height: '30px',
-          background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 12px rgba(53,132,228,0.4)',
-        }}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <polygon points="1,1 11,6 1,11" fill="white" />
-          </svg>
-        </div>
+        <img 
+          src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" 
+          alt="StreamMG Logo" 
+          style={{ width: '32px', height: '32px', objectFit: 'contain' }} 
+        />
         <span style={{
           fontFamily: "'Sora', sans-serif",
           fontSize: '18px',
