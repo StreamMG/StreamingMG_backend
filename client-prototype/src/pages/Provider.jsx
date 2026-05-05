@@ -24,6 +24,7 @@ const Provider = () => {
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
   const categories = ['salegy', 'hira_gasy', 'tsapiky', 'beko', 'film', 'documentaire', 'podcast', 'tutoriel', 'autre'];
   const types = ['video', 'audio'];
@@ -121,6 +122,7 @@ const Provider = () => {
       price: content.price || '',
       isTutorial: content.isTutorial
     });
+    setThumbnailPreview(content.thumbnail ? imgUrl(content.thumbnail) : null);
     setShowUploadForm(true);
   };
 
@@ -136,6 +138,7 @@ const Provider = () => {
       isTutorial: false
     });
     setEditingContent(null);
+    setThumbnailPreview(null);
   };
 
   const formatPrice = (amount) => {
@@ -243,7 +246,14 @@ const Provider = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Catégorie *</label>
-                    <select className="input-field" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                    <select className="input-field" value={formData.category} onChange={e => {
+                      const cat = e.target.value;
+                      let newType = formData.type;
+                      // Détection automatique du type selon catégorie
+                      if (['podcast', 'salegy', 'hira_gasy', 'tsapiky', 'beko'].includes(cat)) newType = 'audio';
+                      if (['film', 'documentaire', 'tutoriel'].includes(cat)) newType = 'video';
+                      setFormData({...formData, category: cat, type: newType});
+                    }}>
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -282,13 +292,28 @@ const Provider = () => {
                   )}
                 </div>
 
-                <div style={{ marginTop: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
-                  <input type="file" accept="image/jpeg,image/png" onChange={e => setFormData({...formData, thumbnail: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
+                <div style={{ marginTop: '8px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" onChange={e => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setFormData({...formData, thumbnail: file});
+                          setThumbnailPreview(URL.createObjectURL(file));
+                        }
+                      }} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
+                    </div>
+                  </div>
+                  {thumbnailPreview && (
+                    <div style={{ width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--bg-border)', flexShrink: 0 }}>
+                      <img src={thumbnailPreview} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Fichier Média {editingContent ? '' : '*'}</label>
-                  <input type="file" accept={formData.type === 'video' ? 'video/mp4' : 'audio/mpeg,audio/aac'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
+                  <input type="file" accept={formData.type === 'video' ? 'video/mp4,video/mkv,video/avi' : 'audio/mpeg,audio/aac,audio/wav,audio/mp3'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
                 </div>
               </div>
             </div>
