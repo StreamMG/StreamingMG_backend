@@ -30,6 +30,10 @@ const Register = () => {
       const res = await api.post('/auth/register', { username: formData.username, email: formData.email, password: formData.password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
+      // Stocker le refreshToken pour le renouvellement du JWT
+      if (res.data.refreshToken) {
+        localStorage.setItem('refreshToken', res.data.refreshToken);
+      }
       navigate('/');
     } catch (err) {
       setErrors({ submit: err.response?.data?.message || 'Une erreur est survenue' });

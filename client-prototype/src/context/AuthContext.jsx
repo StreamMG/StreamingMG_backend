@@ -22,6 +22,10 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data.user);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('token', res.data.token);
+      // Stocker le refreshToken pour le renouvellement du JWT
+      if (res.data.refreshToken) {
+        localStorage.setItem('refreshToken', res.data.refreshToken);
+      }
       return { success: true };
     } catch (err) {
       return { success: false, message: err.response?.data?.message || 'Erreur de connexion' };
@@ -37,6 +41,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
     }
   };
 
