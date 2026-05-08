@@ -42,7 +42,7 @@ export default function VideoPlayerEnhanced() {
     try {
       const res = await api.get(`/contents/${id}`);
       setContent(res.data.content);
-      api.post(`/contents/${id}/view`).catch(() => {});
+      api.post(`/contents/${id}/view`).catch(() => { });
     } catch (err) {
       if (err.response?.status === 403) setAccessError(err.response.data);
       else setError('Impossible de charger le contenu');
@@ -97,7 +97,7 @@ export default function VideoPlayerEnhanced() {
           URL.revokeObjectURL(videoRef.current._blobUrl);
           videoRef.current._blobUrl = null;
         }
-        
+
         // 🚀 Optimisation Audio : Stream direct avec cookies
         videoRef.current.crossOrigin = 'use-credentials';
         videoRef.current.preload = 'auto'; // Lance le buffer en arrière-plan dès l'assignation de l'URL
@@ -337,14 +337,14 @@ export default function VideoPlayerEnhanced() {
             </select>
 
             {/* Minimize to MiniPlayer */}
-            <button 
+            <button
               onClick={() => {
                 if (videoRef.current) {
                   videoRef.current.pause();
                 }
                 playTrack(content);
                 navigate('/');
-              }} 
+              }}
               title="Réduire"
               style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px', marginLeft: '8px' }}
             >

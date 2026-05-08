@@ -32,24 +32,31 @@ const Catalogue = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?._id]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const requests = [
+      // 1. Données publiques
+      const publicRequests = [
         api.get('/contents/featured').catch(() => ({ data: { featured: [] } })),
         api.get('/contents?limit=50').catch(() => ({ data: { contents: [] } })),
-        api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
-        api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
       ];
 
-      const [featuredRes, allRes, historyRes, progressRes] = await Promise.all(requests);
-
+      const [featuredRes, allRes] = await Promise.all(publicRequests);
       setFeatured(featuredRes.data.featured || []);
       setContents(allRes.data.contents || []);
-      setHistory(historyRes.data.history || []);
-      setTutorialProgress(progressRes.data.inProgress || []);
+
+      // 2. Données privées (uniquement si connecté)
+      if (user) {
+        const privateRequests = [
+          api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
+          api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
+        ];
+        const [historyRes, progressRes] = await Promise.all(privateRequests);
+        setHistory(historyRes.data.history || []);
+        setTutorialProgress(progressRes.data.inProgress || []);
+      }
     } catch (err) {
       console.error('Erreur chargement données:', err);
     } finally {
