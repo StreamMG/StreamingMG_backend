@@ -5,6 +5,8 @@ import {
   Image, DollarSign, Star, Clock, BarChart3, Settings 
 } from 'lucide-react';
 import api from '../api';
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '../utils/cropImage';
 
 const Provider = () => {
   const [contents, setContents] = useState([]);
@@ -24,6 +26,14 @@ const Provider = () => {
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+
+  // ── Cropper States ──
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   const categories = ['salegy', 'hira_gasy', 'tsapiky', 'beko', 'film', 'documentaire', 'podcast', 'tutoriel', 'autre'];
   const types = ['video', 'audio'];
@@ -121,6 +131,7 @@ const Provider = () => {
       price: content.price || '',
       isTutorial: content.isTutorial
     });
+    setThumbnailPreview(content.thumbnail ? imgUrl(content.thumbnail) : null);
     setShowUploadForm(true);
   };
 
@@ -136,6 +147,24 @@ const Provider = () => {
       isTutorial: false
     });
     setEditingContent(null);
+    setThumbnailPreview(null);
+  };
+
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleSaveCrop = async () => {
+    try {
+      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const croppedFile = new File([croppedImageBlob], "thumbnail.jpg", { type: "image/jpeg" });
+      setFormData({...formData, thumbnail: croppedFile});
+      setThumbnailPreview(URL.createObjectURL(croppedFile));
+      setShowCropper(false);
+      setImageToCrop(null);
+    } catch (e) {
+      console.error('Erreur lors du recadrage:', e);
+    }
   };
 
   const formatPrice = (amount) => {
@@ -243,7 +272,14 @@ const Provider = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Catégorie *</label>
-                    <select className="input-field" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                    <select className="input-field" value={formData.category} onChange={e => {
+                      const cat = e.target.value;
+                      let newType = formData.type;
+                      // Détection automatique du type selon catégorie
+                      if (['podcast', 'salegy', 'hira_gasy', 'tsapiky', 'beko'].includes(cat)) newType = 'audio';
+                      if (['film', 'documentaire', 'tutoriel'].includes(cat)) newType = 'video';
+                      setFormData({...formData, category: cat, type: newType});
+                    }}>
                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -282,13 +318,28 @@ const Provider = () => {
                   )}
                 </div>
 
-                <div style={{ marginTop: '8px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
-                  <input type="file" accept="image/jpeg,image/png" onChange={e => setFormData({...formData, thumbnail: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
+                <div style={{ marginTop: '8px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" onChange={e => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setImageToCrop(URL.createObjectURL(file));
+                          setShowCropper(true);
+                        }
+                      }} required={!editingContent && !formData.thumbnail} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
+                    </div>
+                  </div>
+                  {thumbnailPreview && (
+                    <div style={{ width: '100px', aspectRatio: '5/7', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--bg-border)', flexShrink: 0 }}>
+                      <img src={thumbnailPreview} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Fichier Média {editingContent ? '' : '*'}</label>
-                  <input type="file" accept={formData.type === 'video' ? 'video/mp4' : 'audio/mpeg,audio/aac'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
+                  <input type="file" accept={formData.type === 'video' ? 'video/mp4,video/mkv,video/avi' : 'audio/mpeg,audio/aac,audio/wav,audio/mp3'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
                 </div>
               </div>
             </div>
@@ -321,10 +372,10 @@ const Provider = () => {
             <button className="btn btn-primary" onClick={() => setShowUploadForm(true)} style={{ borderRadius: '12px', margin: '0 auto' }}>Ajouter un contenu</button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
             {contents.map(c => (
               <div key={c._id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ position: 'relative', aspectRatio: '16/9' }}>
+                <div style={{ position: 'relative', aspectRatio: '5/7' }}>
                   <img src={imgUrl(c.thumbnail)} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', top: '8px', right: '8px' }}>{getAccessBadge(c)}</div>
                   <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -357,6 +408,37 @@ const Provider = () => {
           </div>
         )}
       </section>
+
+      {/* ── Modal de recadrage (Cropper) ── */}
+      {showCropper && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', height: '60vh', background: '#000', borderRadius: '16px', overflow: 'hidden' }}>
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={5 / 7}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          <div style={{ marginTop: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <input 
+              type="range" 
+              value={zoom} 
+              min={1} 
+              max={3} 
+              step={0.1} 
+              aria-label="Zoom" 
+              onChange={(e) => setZoom(Number(e.target.value))} 
+              style={{ width: '150px' }}
+            />
+            <button className="btn btn-secondary" onClick={() => { setShowCropper(false); setImageToCrop(null); }}>Annuler</button>
+            <button className="btn btn-primary" onClick={handleSaveCrop}>Recadrer et valider</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

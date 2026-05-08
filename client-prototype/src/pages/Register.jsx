@@ -30,6 +30,10 @@ const Register = () => {
       const res = await api.post('/auth/register', { username: formData.username, email: formData.email, password: formData.password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
+      // Stocker le refreshToken pour le renouvellement du JWT
+      if (res.data.refreshToken) {
+        localStorage.setItem('refreshToken', res.data.refreshToken);
+      }
       navigate('/');
     } catch (err) {
       setErrors({ submit: err.response?.data?.message || 'Une erreur est survenue' });
@@ -69,7 +73,7 @@ const Register = () => {
         }}>
           {/* Logo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', gap: '10px' }}>
-            <img src="/streammg_logo_mada_1777321847119.png" alt="StreamMG" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+            <img src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" alt="StreamMG Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
             <span style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 800 }}>
               Stream<span style={{ color: 'var(--primary)' }}>MG</span>
             </span>

@@ -42,7 +42,7 @@ export default function VideoPlayerEnhanced() {
     try {
       const res = await api.get(`/contents/${id}`);
       setContent(res.data.content);
-      api.post(`/contents/${id}/view`).catch(() => {});
+      api.post(`/contents/${id}/view`).catch(() => { });
     } catch (err) {
       if (err.response?.status === 403) setAccessError(err.response.data);
       else setError('Impossible de charger le contenu');
@@ -68,7 +68,10 @@ export default function VideoPlayerEnhanced() {
             xhrSetup: function (xhr, url) {
               xhr.withCredentials = true;
             },
-            // 🚀 Optimisation Vidéo (HLS) :
+            // 🚀 Optimisation Vidéo (HLS) - TTFF (Time To First Frame)
+            startLevel: -1,            // Démarre sur la résolution la plus basse pour lancer la lecture instantanément
+            capLevelToPlayerSize: true,// Ne télécharge jamais du 4K si le lecteur fait 800px de large (économie massive)
+            lowLatencyMode: true,      // Réduit la latence de démarrage
             maxBufferLength: 30,       // Garde max 30s de vidéo en avance (évite le gâchis de data)
             maxMaxBufferLength: 60,    // Hard limite à 60s
             maxBufferSize: 50 * 1000 * 1000, // Limite la RAM à 50MB
@@ -94,9 +97,10 @@ export default function VideoPlayerEnhanced() {
           URL.revokeObjectURL(videoRef.current._blobUrl);
           videoRef.current._blobUrl = null;
         }
-        
+
         // 🚀 Optimisation Audio : Stream direct avec cookies
         videoRef.current.crossOrigin = 'use-credentials';
+        videoRef.current.preload = 'auto'; // Lance le buffer en arrière-plan dès l'assignation de l'URL
         videoRef.current.src = fullUrl;
         setPlayerReady(true);
       }
@@ -216,7 +220,7 @@ export default function VideoPlayerEnhanced() {
   );
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
+    <div className="player-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
       {/* Back */}
       <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
         <ArrowLeft size={16} /> Retour au catalogue
@@ -235,11 +239,11 @@ export default function VideoPlayerEnhanced() {
         onClick={togglePlay}
       >
         {content?.type === 'audio' ? (
-          <div style={{
+          <div className="audio-overlay" style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: '24px', padding: '24px',
             background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-raised))'
           }}>
-            <img src={getImageUrl(content.thumbnail)} alt="" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+            <img src={getImageUrl(content.thumbnail)} alt="" className={isPlaying ? '' : 'paused'} style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 700 }}>{content.title}</div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{content.category}</div>
@@ -285,7 +289,7 @@ export default function VideoPlayerEnhanced() {
         )}
 
         {/* Controls overlay */}
-        <div style={{
+        <div className="controls-overlay" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
           padding: '32px 20px 16px',
@@ -304,7 +308,7 @@ export default function VideoPlayerEnhanced() {
           </div>
 
           {/* Controls row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="controls-row" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Play/Pause */}
             <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px' }}>
               {isPlaying ? <Pause size={22} /> : <Play size={22} fill="white" />}
@@ -333,14 +337,14 @@ export default function VideoPlayerEnhanced() {
             </select>
 
             {/* Minimize to MiniPlayer */}
-            <button 
+            <button
               onClick={() => {
                 if (videoRef.current) {
                   videoRef.current.pause();
                 }
                 playTrack(content);
                 navigate('/');
-              }} 
+              }}
               title="Réduire"
               style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px', marginLeft: '8px' }}
             >
@@ -354,7 +358,7 @@ export default function VideoPlayerEnhanced() {
           </div>
         </div>
 
-        <audio ref={content?.type === 'audio' ? videoRef : undefined} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+        <audio ref={content?.type === 'audio' ? videoRef : undefined} preload="auto" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
       </div>
 
       {/* Info section */}

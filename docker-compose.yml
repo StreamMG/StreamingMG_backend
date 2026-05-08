@@ -20,6 +20,10 @@ services:
     build:
       context: ./client-prototype
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
+        - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:3001}
+        - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY:-pk_test}
     ports:
       - "5173:80"
     depends_on:

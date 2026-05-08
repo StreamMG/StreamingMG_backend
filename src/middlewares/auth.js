@@ -31,6 +31,7 @@ const authRequired = (req, res, next) => {
 /**
  * authOptional — Route publique (req.user = null si pas de token)
  * Utilisé pour le catalogue, les contenus gratuits
+ * ⚠️ Un token expiré ne doit PAS bloquer l'accès public → req.user = null
  */
 const authOptional = (req, res, next) => {
   const header = req.headers.authorization;
@@ -45,10 +46,8 @@ const authOptional = (req, res, next) => {
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expiré' });
-    }
-    req.user = null;  // Autre erreur → on assume anonyme
+    // Token expiré ou invalide → accès anonyme sur routes publiques
+    req.user = null;
   }
   next();
 };
