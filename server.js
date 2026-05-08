@@ -9,12 +9,12 @@ const PORT = process.env.PORT || 3001;
 
 // Connexion MongoDB puis démarrage du serveur
 connectDB().then(() => {
-  const server = app.listen(PORT, () => {
+  // Remplace la ligne du listen par celle-ci :
+const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🚀 StreamMG Backend démarré`);
-    console.log(`   ► http://localhost:${PORT}/api`);
+    console.log(`   ► Accessible sur le port : ${PORT}`);
     console.log(`   ► Environnement : ${process.env.NODE_ENV || 'development'}\n`);
-  });
-
+});
   // ⏱️ Pas de timeout HTTP : pour les uploads de gros fichiers (>1Go)
   // Le client a tout le temps nécessaire pour envoyer son fichier
   server.timeout = 0;         // TCP socket inactivity timeout
