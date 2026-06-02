@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const redirectTo = location.state?.from || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,7 +19,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     const res = await login(email, password);
-    if (!res.success) setError(res.message);
+    if (res.success) navigate(redirectTo, { replace: true });
+    else setError(res.message);
     setLoading(false);
   };
 
@@ -68,7 +72,7 @@ export default function Login() {
             Bon retour !
           </h1>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '32px' }}>
-            Connectez-vous pour accéder au patrimoine malagasy
+            Connectez-vous pour lire les contenus StreamMG
           </p>
 
           {error && (

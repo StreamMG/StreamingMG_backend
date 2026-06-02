@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 
@@ -20,7 +20,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
  */
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
+  const location = useLocation();
+  return user ? children : <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
 };
 
 /**
@@ -55,7 +56,7 @@ function App() {
 
           {/* App — public & private mixes */}
           <Route path="/" element={<Catalogue />} />
-          <Route path="/watch/:id" element={<VideoPlayerEnhanced />} />
+          <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
           
           {/* App — private */}
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

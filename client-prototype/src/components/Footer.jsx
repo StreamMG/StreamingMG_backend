@@ -44,10 +44,10 @@ export default function Footer() {
       <div style={{
         maxWidth: '1480px',
         margin: '0 auto',
-        padding: '56px 40px 40px',
+        padding: 'clamp(32px, 5vw, 56px) clamp(16px, 5vw, 40px)',
         display: 'grid',
-        gridTemplateColumns: '2fr 1fr 1fr 1fr',
-        gap: '48px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: 'clamp(32px, 5vw, 48px)',
       }}>
 
         {/* Brand column */}
@@ -73,14 +73,14 @@ export default function Footer() {
           </p>
 
           {/* Platform badges */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '24px', flexWrap: 'wrap' }}>
             <div style={{
               padding: '8px 14px', borderRadius: '10px',
               background: 'var(--bg-raised)', border: '1px solid var(--bg-border)',
               fontSize: '11px', color: 'var(--text-secondary)',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}>
-              <span>📱</span> Application mobile
+              <span>📱</span> Mobile
             </div>
             <div style={{
               padding: '8px 14px', borderRadius: '10px',
@@ -127,19 +127,20 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div style={{
+      <div className="footer-bottom-bar" style={{
         borderTop: '1px solid var(--bg-border)',
-        padding: '18px 40px',
+        padding: 'clamp(12px, 3vw, 18px) clamp(16px, 5vw, 40px)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
+        gap: '12px',
         maxWidth: '1480px',
         margin: '0 auto',
         fontSize: '12px',
         color: 'var(--text-muted)',
+        textAlign: 'center',
       }}>
-        <span>© 2026 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
-        <span style={{ color: 'var(--primary-light)' }}>Construit pour le patrimoine malagasy ❤</span>
+        <span>© 2026 StreamMG — Licence 3</span>
+        <span style={{ color: 'var(--primary-light)' }}>Patrimoine malagasy ❤</span>
       </div>
     </footer>
   );

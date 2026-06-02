@@ -29,8 +29,8 @@
 
   /* Text */
   --text-primary: #eef0f6;
-  --text-secondary: #8d96a8;
-  --text-muted: #545d6e;
+  --text-secondary: #a8b2c1; /* WCAG AA 4.5:1 on dark bg */
+  --text-muted: #6b7683; /* WCAG AA on --bg-raised */
   --text-on-blue: #ffffff;
 
   /* Semantics */
@@ -47,7 +47,12 @@
   --radius-full: 9999px;
 
   /* Spacing */
-  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  
+  /* Responsive Padding */
+  --pad-mobile: 16px;
+  --pad-tablet: 24px;
+  --pad-desktop: 40px;
   --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
   --sp-12: 48px; --sp-16: 64px;
   
@@ -193,8 +198,32 @@ h4 { font-weight: 500; font-size: 16px; letter-spacing: -0.01em; line-height: 1.
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-in {
   animation: fadeUp 0.4s ease-out forwards;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(53, 132, 228, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .grid {
@@ -324,19 +353,137 @@ h4 { font-weight: 500; font-size: 16px; letter-spacing: -0.01em; line-height: 1.
 }
 
 /* Topbar */
-.topbar {
-  position: sticky;
-  top: 0;
-  height: 64px;
-  background: rgba(13, 16, 24, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--bg-border);
-  display: flex;
-  justify-content: space-between;
+.topbar-shell {
+  min-width: 0;
+}
+
+.topbar-logo-text {
+  display: none;
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.topbar-nav,
+.topbar-search-container,
+.topbar-notifications-btn,
+.topbar-premium-badge,
+.topbar-premium-btn {
+  display: none !important;
+}
+
+.topbar-actions {
+  overflow: hidden;
+}
+
+.topbar-login-btn {
+  flex-shrink: 0;
+}
+
+.topbar-menu-btn {
+  display: flex !important;
+  flex-shrink: 0;
+}
+
+.mobile-menu-backdrop {
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+
+.topbar-mobile-nav {
+  display: block !important;
+}
+
+.topbar-mobile-nav ul {
+  width: 100%;
+}
+
+.topbar-mobile-nav a {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 520px) {
+  .topbar-logo-text {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .topbar-search-container {
+    display: flex !important;
+  }
+
+  .topbar-notifications-btn,
+  .topbar-premium-badge,
+  .topbar-premium-btn {
+    display: inline-flex !important;
+  }
+}
+
+@media (min-width: 1080px) {
+  .topbar-nav {
+    display: flex !important;
+    min-width: 0;
+  }
+
+  .topbar-menu-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar-search-container,
+  .topbar-notifications-btn,
+  .topbar-premium-badge,
+  .topbar-premium-btn {
+    display: none !important;
+  }
+
+  .topbar-login-btn span {
+    display: none;
+  }
+
+  .topbar-login-btn {
+    width: 38px;
+    padding: 0 !important;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar-logo-text {
+    display: none;
+  }
+}
+
+.visitor-login-reminder {
+  width: 100%;
+}
+
+.footer-bottom-bar {
   align-items: center;
-  padding: 0 var(--sp-10);
-  z-index: 200;
+}
+
+@media (min-width: 640px) {
+  .footer-bottom-bar {
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .visitor-login-reminder {
+    flex-direction: column;
+    align-items: stretch !important;
+    padding: 18px !important;
+  }
+
+  .visitor-login-reminder .btn {
+    width: 100%;
+  }
 }
 
 /* Sections */
@@ -382,9 +529,7 @@ h4 { font-weight: 500; font-size: 16px; letter-spacing: -0.01em; line-height: 1.
 /* Hero */
 .hero {
   position: relative;
-  height: 60vh;
-  min-height: 400px;
-  max-height: 600px;
+  height: clamp(300px, 60vh, 500px);
   overflow: hidden;
   display: flex;
   align-items: center;
