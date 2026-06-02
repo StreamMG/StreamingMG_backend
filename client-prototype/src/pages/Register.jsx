@@ -1,23 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Si déjà connecté, rediriger
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.username) newErrors.username = 'Nom d\'utilisateur requis';
     else if (formData.username.length < 3) newErrors.username = 'Minimum 3 caractères';
-    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Email invalide';
-    if (!formData.password || formData.password.length < 8) newErrors.password = 'Minimum 8 caractères';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    else if (formData.username.length > 30) newErrors.username = 'Maximum 30 caractères';
+    
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) 
+      newErrors.email = 'Email invalide';
+    
+    if (!formData.password || formData.password.length < 8) 
+      newErrors.password = 'Minimum 8 caractères';
+    
+    if (formData.password !== formData.confirmPassword) 
+      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -25,18 +42,31 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+    
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/register', { username: formData.username, email: formData.email, password: formData.password });
+      const res = await api.post('/auth/register', { 
+        username: formData.username, 
+        email: formData.email, 
+        password: formData.password 
+      });
+      
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      // Stocker le refreshToken pour le renouvellement du JWT
       if (res.data.refreshToken) {
         localStorage.setItem('refreshToken', res.data.refreshToken);
       }
+      
+      // Redirection manuelle car le context ne met pas à jour immédiatement
       navigate('/');
+      window.location.reload();
     } catch (err) {
-      setErrors({ submit: err.response?.data?.message || 'Une erreur est survenue' });
+      const message = err.response?.data?.message || 'Une erreur est survenue';
+      if (message.includes('Email')) {
+        setErrors({ email: message });
+      } else {
+        setErrors({ submit: message });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,8 +115,8 @@ const Register = () => {
           </p>
 
           {errors.submit && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(237,51,59,0.1)', border: '1px solid rgba(237,51,59,0.25)', color: '#ff6b75', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px', fontSize: '13px' }}>
-              <AlertCircle size={16} /> {errors.submit}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(237,51,59,0.1)', border: '1px solid rgba(237,51,59,0.25)', color: '#ff6b75', padding: '12px 16px', borderRadius: '10px', marginBottom: '20px', fontSize: '13px' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} /> {errors.submit}
             </div>
           )}
 
@@ -114,7 +144,7 @@ const Register = () => {
                 <div style={{ position: 'relative' }}>
                   <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input type={show ? 'text' : 'password'} name={name} className="input-field" style={{ ...fieldStyle(errors[name]), paddingRight: '42px' }} value={formData[name]} onChange={handleChange} placeholder={placeholder} disabled={isLoading} />
-                  <button type="button" onClick={toggle} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+                  <button type="button" onClick={toggle} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', padding: 0 }} disabled={isLoading}>
                     {show ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>

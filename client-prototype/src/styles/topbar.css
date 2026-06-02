@@ -1,0 +1,53 @@
+/* Topbar Responsive Styles */
+
+/* Desktop (768px+) */
+@media (min-width: 768px) {
+  nav {
+    display: flex !important;
+  }
+  
+  .topbar-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  button[aria-label="Menu"] {
+    display: none !important;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+  nav {
+    display: none !important;
+  }
+  
+  .topbar-center {
+    display: none !important;
+  }
+  
+  button[aria-label="Menu"] {
+    display: flex !important;
+  }
+}
+
+/* Mobile Menu */
+.mobile-menu-backdrop {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--bg-border);
+  z-index: 199;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  animation: slideDown 200ms ease-out forwards;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-backdrop {
+    display: none !important;
+  }
+}

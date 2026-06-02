@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
+import { LogIn, Lock } from 'lucide-react';
 
 /* ── Composants v2 ── */
 import Hero from '../components/Hero';
@@ -84,6 +86,56 @@ const Catalogue = () => {
     return p ? Math.round(p.percentComplete || 0) : null;
   };
 
+  const VisitorLoginReminder = () => (
+    <section className="visitor-login-reminder" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '20px',
+      padding: '20px 22px',
+      borderRadius: '16px',
+      background: 'linear-gradient(135deg, rgba(53,132,228,0.12), rgba(32,36,52,0.88))',
+      border: '1px solid rgba(53,132,228,0.28)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+        <div style={{
+          width: '42px',
+          height: '42px',
+          borderRadius: '12px',
+          background: 'rgba(53,132,228,0.16)',
+          color: 'var(--primary-light)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <Lock size={20} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: "'Sora', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            Connectez-vous pour lire les contenus
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Les visiteurs peuvent parcourir le catalogue, mais la lecture demande un compte StreamMG.
+          </p>
+        </div>
+      </div>
+      <Link
+        to="/login"
+        className="btn btn-primary"
+        style={{
+          height: '42px',
+          borderRadius: '12px',
+          whiteSpace: 'nowrap',
+          textDecoration: 'none',
+          flexShrink: 0,
+        }}
+      >
+        <LogIn size={17} /> Se connecter
+      </Link>
+    </section>
+  );
+
   if (loading) {
     return (
       <div style={{
@@ -119,6 +171,7 @@ const Catalogue = () => {
         flexDirection: 'column',
         gap: '56px',
       }}>
+        {!user && <VisitorLoginReminder />}
 
         {/* ───────────────────────────────────────────────────
             2. CONTINUER À REGARDER

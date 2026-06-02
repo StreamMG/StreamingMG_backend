@@ -13,8 +13,8 @@ export default function Layout({ children }) {
 
   const isAuthPage = AUTH_PATHS.some(p => location.pathname.startsWith(p));
 
-  // Si on est sur une page d'auth ou déconnecté, on n'affiche que le contenu
-  if (isAuthPage || !user) {
+  // Les pages d'auth gardent leur layout centré.
+  if (isAuthPage) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {children}
@@ -22,9 +22,9 @@ export default function Layout({ children }) {
     );
   }
 
-  // Layout principal de l'app (connecté)
+  // Layout principal de l'app, visible aussi aux visiteurs pour garder l'appel à connexion.
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', paddingBottom: '96px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', paddingBottom: user ? '96px' : 0 }}>
       <Topbar />
       
       <div style={{ flex: 1, paddingTop: '64px' }}>
@@ -32,7 +32,7 @@ export default function Layout({ children }) {
       </div>
 
       <Footer />
-      <MiniPlayer />
+      {user && <MiniPlayer />}
     </div>
   );
 }
