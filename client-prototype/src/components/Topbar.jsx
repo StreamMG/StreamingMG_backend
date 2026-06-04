@@ -6,7 +6,6 @@ import { Bell, LogIn, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Accueil' },
-  { path: '/explorer', label: 'Explorer' },
   { path: '/musique', label: 'Musique' },
   { path: '/tutoriels', label: 'Tutoriels' },
   { path: '/provider', label: 'Fournisseurs', roles: ['provider', 'admin'] },

@@ -9,7 +9,7 @@ export default function Login() {
   const navigate = useNavigate();
   const redirectTo = location.state?.from || '/';
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -140,34 +140,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Comptes test */}
-          <div style={{
-            marginTop: '28px', padding: '16px', borderRadius: '12px',
-            background: 'rgba(53,132,228,0.06)', border: '1px solid rgba(53,132,228,0.15)'
-          }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
-              Comptes de test (mot de passe: password123)
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {[
-                { email: 'premium@test.com', label: 'Compte Premium', badge: 'PREMIUM' },
-                { email: 'provider_seed@test.com', label: 'Compte Fournisseur', badge: 'PROVIDER' },
-              ].map(({ email: e, label, badge }) => (
-                <button key={e} type="button" onClick={() => setEmail(e)} style={{
-                  background: 'transparent', border: '1px solid var(--bg-border)', borderRadius: '8px',
-                  padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', color: 'var(--text-primary)', fontSize: '12px',
-                  transition: 'border-color 150ms'
-                }}
-                  onMouseEnter={el => el.currentTarget.style.borderColor = 'rgba(53,132,228,0.4)'}
-                  onMouseLeave={el => el.currentTarget.style.borderColor = 'var(--bg-border)'}
-                >
-                  <span style={{ color: 'var(--primary-light)' }}>{e}</span>
-                  <span className="badge badge-premium" style={{ fontSize: '9px' }}>{badge}</span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           <p style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)', marginTop: '24px' }}>
             Pas encore de compte ?{' '}

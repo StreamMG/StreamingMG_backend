@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Upload, Plus, Edit, Trash2, Eye, EyeOff, Film, Music, 
-  Image, DollarSign, Star, Clock, BarChart3, Settings 
+  Image, DollarSign, Star, Clock, BarChart3, Settings, 
+  CheckCircle, AlertCircle, Sparkles
 } from 'lucide-react';
 import api from '../api';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../utils/cropImage';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Provider = () => {
   const [contents, setContents] = useState([]);
@@ -14,6 +16,7 @@ const Provider = () => {
   const [loading, setLoading] = useState(true);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [editingContent, setEditingContent] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', description: '', onConfirm: null, variant: 'danger' });
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -63,6 +66,25 @@ const Provider = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation avant upload
+    if (!formData.title.trim()) {
+      alert('Le titre est requis');
+      return;
+    }
+    if (!formData.thumbnail && !editingContent) {
+      alert('La vignette est requise');
+      return;
+    }
+    if (!formData.media && !editingContent) {
+      alert('Le fichier média est requis');
+      return;
+    }
+    if (formData.accessType === 'paid' && (!formData.price || parseInt(formData.price) < 100)) {
+      alert('Le prix doit être d\'au moins 100 Ar');
+      return;
+    }
+
     setIsUploading(true);
     
     try {
@@ -109,14 +131,23 @@ const Provider = () => {
   };
 
   const handleDelete = async (contentId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce contenu ?')) return;
-    
-    try {
-      await api.delete(`/provider/contents/${contentId}`);
-      loadContents();
-    } catch (err) {
-      console.error('Erreur suppression:', err);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Supprimer ce contenu ?',
+      description: 'Cette action est irréversible. Le contenu sera définitivement supprimé de la plateforme.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/provider/contents/${contentId}`);
+          loadContents();
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        } catch (err) {
+          console.error('Erreur suppression:', err);
+        }
+      }
+    });
   };
 
   const handleEdit = (content) => {
@@ -243,11 +274,71 @@ const Provider = () => {
 
       {/* ── Formulaire d'upload ── */}
       {showUploadForm && (
-        <section style={{ background: 'var(--bg-surface)', border: '1px solid var(--primary)', borderRadius: '24px', padding: '32px', position: 'relative', boxShadow: '0 0 40px rgba(53,132,228,0.1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 700 }}>{editingContent ? 'Modifier' : 'Ajouter'} un contenu</h2>
-            <button onClick={() => setShowUploadForm(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '8px' }}>✕</button>
+        <section style={{ 
+          background: 'var(--bg-surface)', 
+          border: '1px solid var(--primary)', 
+          borderRadius: '24px', 
+          padding: '0', 
+          position: 'relative', 
+          boxShadow: '0 0 40px rgba(53,132,228,0.1)',
+          overflow: 'hidden'
+        }}>
+          {/* Header avec gradient */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, rgba(53,132,228,0.1), rgba(53,132,228,0.05))',
+            padding: '24px 32px',
+            borderBottom: '1px solid var(--bg-border)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: '12px', 
+                background: 'rgba(53,132,228,0.15)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: 'var(--primary)'
+              }}>
+                {editingContent ? <Edit size={24} /> : <Plus size={24} />}
+              </div>
+              <div>
+                <h2 style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>{editingContent ? 'Modifier' : 'Ajouter'} un contenu</h2>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{editingContent ? 'Mettez à jour les informations' : 'Remplissez tous les champs requis'}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowUploadForm(false)} 
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '10px', 
+                background: 'var(--bg-raised)', 
+                border: '1px solid var(--bg-border)', 
+                color: 'var(--text-muted)', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                transition: 'all 150ms'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--bg-overlay)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--bg-raised)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+              }}
+            >
+              <X size={20} />
+            </button>
           </div>
+          
+          <div style={{ padding: '32px' }}>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
@@ -353,11 +444,41 @@ const Provider = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid var(--bg-border)' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowUploadForm(false)}>Annuler</button>
-              <button type="submit" className="btn btn-primary" disabled={isUploading}>{isUploading ? 'Upload...' : (editingContent ? 'Mettre à jour' : 'Uploader')}</button>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '24px', borderTop: '1px solid var(--bg-border)' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setShowUploadForm(false)}
+                style={{ borderRadius: '12px', height: '48px', fontWeight: 600 }}
+              >
+                Annuler
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={isUploading}
+                style={{ 
+                  borderRadius: '12px', 
+                  height: '48px', 
+                  fontWeight: 600,
+                  minWidth: '160px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isUploading ? (
+                  <><div className="loading-spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} /> Upload...</>
+                ) : editingContent ? (
+                  <><CheckCircle size={18} /> Mettre à jour</>
+                ) : (
+                  <><Sparkles size={18} /> Uploader</>
+                )}
+              </button>
             </div>
           </form>
+          </div>
         </section>
       )}
 
@@ -411,8 +532,28 @@ const Provider = () => {
 
       {/* ── Modal de recadrage (Cropper) ── */}
       {showCropper && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', height: '60vh', background: '#000', borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          background: 'rgba(0,0,0,0.95)', 
+          zIndex: 9999, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          backdropFilter: 'blur(8px)' 
+        }}>
+          <div style={{ 
+            position: 'relative', 
+            width: '100%', 
+            maxWidth: '450px', 
+            height: '65vh', 
+            background: '#000', 
+            borderRadius: '20px', 
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            border: '1px solid var(--bg-border)'
+          }}>
             <Cropper
               image={imageToCrop}
               crop={crop}
@@ -423,22 +564,59 @@ const Provider = () => {
               onZoomChange={setZoom}
             />
           </div>
-          <div style={{ marginTop: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <input 
-              type="range" 
-              value={zoom} 
-              min={1} 
-              max={3} 
-              step={0.1} 
-              aria-label="Zoom" 
-              onChange={(e) => setZoom(Number(e.target.value))} 
-              style={{ width: '150px' }}
-            />
-            <button className="btn btn-secondary" onClick={() => { setShowCropper(false); setImageToCrop(null); }}>Annuler</button>
-            <button className="btn btn-primary" onClick={handleSaveCrop}>Recadrer et valider</button>
+          <div style={{ 
+            marginTop: '32px', 
+            display: 'flex', 
+            gap: '16px', 
+            alignItems: 'center',
+            background: 'var(--bg-surface)',
+            padding: '20px 32px',
+            borderRadius: '16px',
+            border: '1px solid var(--bg-border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Zoom:</span>
+              <input 
+                type="range" 
+                value={zoom} 
+                min={1} 
+                max={3} 
+                step={0.1} 
+                aria-label="Zoom" 
+                onChange={(e) => setZoom(Number(e.target.value))} 
+                style={{ flex: 1, accentColor: 'var(--primary)' }}
+              />
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', minWidth: '32px' }}>{Math.round(zoom * 100)}%</span>
+            </div>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => { setShowCropper(false); setImageToCrop(null); }}
+              style={{ borderRadius: '12px', height: '44px', fontWeight: 600 }}
+            >
+              Annuler
+            </button>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleSaveCrop}
+              style={{ borderRadius: '12px', height: '44px', fontWeight: 600, minWidth: '140px' }}
+            >
+              <CheckCircle size={18} style={{ marginRight: '8px' }} /> Recadrer
+            </button>
           </div>
         </div>
       )}
+
+      {/* ── Dialog de confirmation ── */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+      />
     </div>
   );
 };

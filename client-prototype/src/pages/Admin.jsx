@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { 
   BarChart3, Users, Film, Music, DollarSign, TrendingUp, 
   Check, X, Eye, Edit, Trash2, Settings, Crown, Star,
-  Package, Clock, AlertCircle 
+  Package, Clock, AlertCircle, CheckCircle, Shield, Ban
 } from 'lucide-react';
 import api from '../api';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Admin = () => {
   const [stats, setStats] = useState({
@@ -19,6 +20,7 @@ const Admin = () => {
   const [filter, setFilter] = useState({ isPublished: null, role: '' });
   const [selectedContent, setSelectedContent] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', description: '', onConfirm: null, variant: 'danger' });
 
   useEffect(() => {
     loadStats();
@@ -64,12 +66,24 @@ const Admin = () => {
   };
 
   const handleApproveContent = async (contentId) => {
-    try {
-      await api.put(`/admin/contents/${contentId}`, { isPublished: true });
-      loadContents(); loadStats();
-    } catch (err) {
-      console.error('Erreur approbation:', err);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Approuver ce contenu ?',
+      description: 'Ce contenu sera visible par tous les utilisateurs. Confirmez-vous l\'approbation ?',
+      confirmLabel: 'Approuver',
+      cancelLabel: 'Annuler',
+      variant: 'success',
+      icon: <CheckCircle size={32} />,
+      onConfirm: async () => {
+        try {
+          await api.put(`/admin/contents/${contentId}`, { isPublished: true });
+          loadContents(); loadStats();
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        } catch (err) {
+          console.error('Erreur approbation:', err);
+        }
+      }
+    });
   };
 
   const handleRejectContent = async (contentId) => {
@@ -84,22 +98,44 @@ const Admin = () => {
   };
 
   const handleDeleteContent = async (contentId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce contenu ?')) return;
-    try {
-      await api.delete(`/admin/contents/${contentId}`);
-      loadContents(); loadStats();
-    } catch (err) {
-      console.error('Erreur suppression:', err);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Supprimer ce contenu ?',
+      description: 'Cette action est irréversible. Le contenu sera définitivement supprimé de la plateforme.',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/contents/${contentId}`);
+          loadContents(); loadStats();
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        } catch (err) {
+          console.error('Erreur suppression:', err);
+        }
+      }
+    });
   };
 
-  const handleToggleUser = async (userId, isActive) => {
-    try {
-      await api.put(`/admin/users/${userId}`, { isActive: !isActive });
-      loadUsers();
-    } catch (err) {
-      console.error('Erreur toggle user:', err);
-    }
+  const handleToggleUser = async (userId, isActive, username) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: isActive ? 'Désactiver cet utilisateur ?' : 'Activer cet utilisateur ?',
+      description: `${isActive ? 'L\'utilisateur ne pourra plus se connecter à la plateforme.' : 'L\'utilisateur pourra à nouveau se connecter à la plateforme.'}\n\nUtilisateur: ${username}`,
+      confirmLabel: isActive ? 'Désactiver' : 'Activer',
+      cancelLabel: 'Annuler',
+      variant: isActive ? 'warning' : 'success',
+      icon: isActive ? <Ban size={32} /> : <Shield size={32} />,
+      onConfirm: async () => {
+        try {
+          await api.put(`/admin/users/${userId}`, { isActive: !isActive });
+          loadUsers();
+          setConfirmDialog({ ...confirmDialog, isOpen: false });
+        } catch (err) {
+          console.error('Erreur toggle user:', err);
+        }
+      }
+    });
   };
 
   const formatPrice = (amount) => `${(amount / 1000).toFixed(0)}k Ar`;
@@ -128,27 +164,86 @@ const Admin = () => {
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px 80px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
       
       {/* ── En-tête ── */}
-      <section style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Sora', fontSize: '32px', fontWeight: 800, marginBottom: '8px' }}>Admin Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Supervisez la plateforme StreamMG</p>
+      <section style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: '24px', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        background: 'linear-gradient(135deg, rgba(53,132,228,0.08), rgba(232,197,71,0.05))',
+        padding: '32px',
+        borderRadius: '24px',
+        border: '1px solid var(--bg-border)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ 
+            width: '64px', 
+            height: '64px', 
+            borderRadius: '16px', 
+            background: 'linear-gradient(135deg, var(--primary), var(--primary-light))', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(53,132,228,0.3)'
+          }}>
+            <Settings size={32} color="white" />
+          </div>
+          <div>
+            <h1 style={{ fontFamily: 'Sora', fontSize: '32px', fontWeight: 800, marginBottom: '8px' }}>Admin Dashboard</h1>
+            <p style={{ color: 'var(--text-secondary)' }}>Supervisez la plateforme StreamMG</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ 
+            padding: '12px 20px', 
+            borderRadius: '12px', 
+            background: 'var(--bg-surface)', 
+            border: '1px solid var(--bg-border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <Shield size={18} color="var(--primary)" />
+            <span style={{ fontSize: '14px', fontWeight: 600 }}>Mode Admin</span>
+          </div>
         </div>
       </section>
 
       {/* ── Onglets ── */}
-      <section style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--bg-border)', paddingBottom: '4px' }}>
+      <section style={{ 
+        display: 'flex', 
+        gap: '4px', 
+        background: 'var(--bg-raised)', 
+        padding: '6px', 
+        borderRadius: '16px',
+        border: '1px solid var(--bg-border)'
+      }}>
         {[
-          { id: 'dashboard', icon: <BarChart3 size={16} />, label: 'Tableau de bord' },
-          { id: 'contents', icon: <Film size={16} />, label: 'Contenus' },
-          { id: 'users', icon: <Users size={16} />, label: 'Utilisateurs' }
+          { id: 'dashboard', icon: <BarChart3 size={18} />, label: 'Tableau de bord' },
+          { id: 'contents', icon: <Film size={18} />, label: 'Contenus' },
+          { id: 'users', icon: <Users size={18} />, label: 'Utilisateurs' }
         ].map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px 12px 0 0',
-            background: activeTab === t.id ? 'var(--bg-surface)' : 'transparent', border: 'none',
-            borderBottom: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-            color: activeTab === t.id ? 'var(--primary-light)' : 'var(--text-secondary)',
-            fontSize: '14px', fontWeight: activeTab === t.id ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s'
-          }}>
+          <button 
+            key={t.id} 
+            onClick={() => setActiveTab(t.id)} 
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', borderRadius: '12px',
+              background: activeTab === t.id ? 'var(--bg-surface)' : 'transparent', border: 'none',
+              color: activeTab === t.id ? 'var(--primary-light)' : 'var(--text-secondary)',
+              fontSize: '14px', fontWeight: activeTab === t.id ? 600 : 500, cursor: 'pointer', transition: 'all 0.2s',
+              boxShadow: activeTab === t.id ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
+            }}
+            onMouseEnter={e => {
+              if (activeTab !== t.id) {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (activeTab !== t.id) {
+                e.currentTarget.style.background = 'transparent';
+              }
+            }}
+          >
             {t.icon} {t.label}
           </button>
         ))}
@@ -317,30 +412,130 @@ const Admin = () => {
 
       {/* ── Modal Rejet ── */}
       {selectedContent && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--primary)', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '500px', boxShadow: '0 0 40px rgba(53,132,228,0.1)' }}>
-            <h3 style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 700, marginBottom: '24px' }}>Rejeter le contenu</h3>
-            
-            <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-raised)', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-              <img src={imgUrl(selectedContent.thumbnail)} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+        <div style={{ 
+          position: 'fixed', 
+          inset: 0, 
+          zIndex: 1000, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          background: 'rgba(0,0,0,0.85)', 
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          animation: 'fadeIn 200ms ease-out'
+        }}>
+          <div style={{ 
+            background: 'var(--bg-surface)', 
+            border: '1px solid var(--bg-border)', 
+            borderRadius: '24px', 
+            padding: '0', 
+            width: '100%', 
+            maxWidth: '520px', 
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            animation: 'slideUp 250ms ease-out',
+            overflow: 'hidden'
+          }}>
+            {/* Header */}
+            <div style={{ 
+              background: 'linear-gradient(135deg, rgba(232,197,71,0.15), rgba(237,51,59,0.1))',
+              padding: '24px 32px',
+              borderBottom: '1px solid var(--bg-border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <div style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '14px', 
+                background: 'rgba(232,197,71,0.2)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: 'var(--gold)'
+              }}>
+                <X size={28} />
+              </div>
               <div>
-                <h4 style={{ fontFamily: 'Sora', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{selectedContent.title}</h4>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{selectedContent.description}</p>
+                <h3 style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>Rejeter le contenu</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Expliquez pourquoi ce contenu ne peut pas être publié</p>
               </div>
             </div>
+            
+            {/* Body */}
+            <div style={{ padding: '32px' }}>
+              <div style={{ display: 'flex', gap: '16px', background: 'var(--bg-raised)', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
+                <img src={imgUrl(selectedContent.thumbnail)} alt="" style={{ width: '70px', height: '70px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <h4 style={{ fontFamily: 'Sora', fontSize: '15px', fontWeight: 600, marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedContent.title}</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{selectedContent.description}</p>
+                </div>
+              </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Raison du rejet *</label>
-              <textarea className="input-field" value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} rows={4} placeholder="Expliquez pourquoi..." required />
-            </div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>Raison du rejet *</label>
+                <textarea 
+                  className="input-field" 
+                  value={rejectionReason} 
+                  onChange={e => setRejectionReason(e.target.value)} 
+                  rows={4} 
+                  placeholder="Expliquez pourquoi ce contenu ne respecte pas les directives..."
+                  required 
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button className="btn btn-secondary" onClick={() => setSelectedContent(null)}>Annuler</button>
-              <button className="btn btn-primary" style={{ background: 'var(--error)', borderColor: 'var(--error)', color: 'white' }} onClick={() => handleRejectContent(selectedContent._id)}>Rejeter</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setSelectedContent(null)}
+                  style={{ borderRadius: '12px', height: '48px', fontWeight: 600 }}
+                >
+                  Annuler
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ 
+                    background: 'var(--error)', 
+                    borderColor: 'var(--error)', 
+                    color: 'white',
+                    borderRadius: '12px',
+                    height: '48px',
+                    fontWeight: 600,
+                    minWidth: '120px'
+                  }} 
+                  onClick={() => handleRejectContent(selectedContent._id)}
+                >
+                  Rejeter
+                </button>
+              </div>
             </div>
           </div>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes slideUp {
+              from { opacity: 0; transform: translateY(20px) scale(0.95); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
         </div>
       )}
+
+      {/* ── Dialog de confirmation ── */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        icon={confirmDialog.icon}
+      />
 
     </div>
   );
