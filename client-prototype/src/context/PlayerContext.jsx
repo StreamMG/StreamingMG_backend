@@ -7,10 +7,12 @@ export function PlayerProvider({ children }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
-  const playTrack = (track) => {
+  const playTrack = (track, time = 0) => {
     setCurrentTrack(track);
     setIsPlaying(true);
+    setCurrentTime(time);
   };
 
   const togglePlay = () => {
@@ -33,6 +35,8 @@ export function PlayerProvider({ children }) {
         setVolume,
         progress,
         setProgress,
+        currentTime,
+        setCurrentTime,
         playTrack,
         togglePlay,
         closePlayer,
