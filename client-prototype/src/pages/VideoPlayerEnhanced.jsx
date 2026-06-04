@@ -317,7 +317,7 @@ export default function VideoPlayerEnhanced() {
   );
 
   return (
-    <div className="player-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
+    <div className="player-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}><ArrowLeft size={16} /> Retour au catalogue</Link>
 
       <div
@@ -325,11 +325,13 @@ export default function VideoPlayerEnhanced() {
         className="player-container"
         style={{
           position: 'relative', background: '#000', borderRadius: '16px',
-          overflow: 'hidden', aspectRatio: content?.type === 'audio' ? '21/4' : '16/9',
+          overflow: 'hidden', aspectRatio: content?.type === 'audio' ? '16/9' : '16/9',
           cursor: showControls ? 'default' : 'none'
         }}
         onMouseMove={showControlsTemporarily}
         onMouseLeave={() => isPlaying && setShowControls(false)}
+        role="region"
+        aria-label={content?.type === 'audio' ? 'Lecteur audio' : 'Lecteur vidéo'}
       >
         {/* Main Video/Audio element */}
         {content?.type === 'audio' ? (
@@ -337,10 +339,10 @@ export default function VideoPlayerEnhanced() {
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: '24px', padding: '24px',
             background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-raised))'
           }}>
-            <img src={getImageUrl(content.thumbnail)} alt="" className={`audio-player-thumb ${isPlaying ? 'animate-pulse' : 'opacity-80'}`} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }} />
-            <div style={{ flex: 1 }}>
-              <div className="audio-player-title" style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>{content.title}</div>
-              <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{content.category} • {content.artist}</div>
+            <img src={getImageUrl(content.thumbnail)} alt={`Vignette de ${content.title}`} className={`audio-player-thumb ${isPlaying ? 'animate-pulse' : 'opacity-80'}`} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="audio-player-title" style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{content.title}</div>
+              <div style={{ fontSize: '14px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{content.category} • {content.artist}</div>
             </div>
           </div>
         ) : (
@@ -354,6 +356,7 @@ export default function VideoPlayerEnhanced() {
             onEnded={() => setIsPlaying(false)}
             onClick={togglePlay}
             onDoubleClick={handleFullscreen}
+            aria-label={content?.title || 'Lecteur vidéo'}
           />
         )}
 
@@ -389,34 +392,40 @@ export default function VideoPlayerEnhanced() {
           transition: 'opacity 300ms, transform 300ms',
           transform: showControls ? 'translateY(0)' : 'translateY(10px)',
           display: 'flex', flexDirection: 'column', gap: '16px'
-        }} onClick={e => e.stopPropagation()}>
+        }} onClick={e => e.stopPropagation()} role="toolbar" aria-label="Contrôles du lecteur">
 
           {/* Progress bar enhanced */}
           <div
             style={{ position: 'relative', height: isHoveringProgress ? '6px' : '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '9999px', cursor: 'pointer', transition: 'height 0.1s' }}
             onMouseEnter={() => setIsHoveringProgress(true)}
             onMouseLeave={() => setIsHoveringProgress(false)}
+            role="slider"
+            aria-label="Barre de progression"
+            aria-valuemin="0"
+            aria-valuemax={duration || 100}
+            aria-valuenow={currentTime}
+            aria-valuetext={`${formatTime(currentTime)} / ${formatTime(duration)}`}
           >
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(buffered / duration) * 100}%`, background: 'rgba(255,255,255,0.15)', borderRadius: '9999px' }} />
-            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(currentTime / duration) * 100}%`, background: 'var(--primary)', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(buffered / duration) * 100}%`, background: 'rgba(255,255,255,0.15)', borderRadius: '9999px' }} aria-hidden="true" />
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(currentTime / duration) * 100}%`, background: 'var(--primary)', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }} aria-hidden="true">
               {isHoveringProgress && <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'white', marginRight: '-6px', boxShadow: '0 0 10px rgba(0,0,0,0.5)' }} />}
             </div>
-            <input type="range" min={0} max={duration || 100} value={currentTime} onChange={handleSeek} style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer', height: '100%' }} />
+            <input type="range" min={0} max={duration || 100} value={currentTime} onChange={handleSeek} style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0, cursor: 'pointer', height: '100%' }} aria-label="Chercher dans le média" />
           </div>
 
           <div className="controls-row" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-            <button onClick={togglePlay} className="control-btn" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <button onClick={togglePlay} className="control-btn" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'} aria-label={isPlaying ? 'Pause' : 'Lecture'}>
               {isPlaying ? <Pause size={24} fill="white" /> : <Play size={24} fill="white" />}
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '120px' }}>
-              <button onClick={() => handleVolumeChange(isMuted ? (volume || 0.5) : 0)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}>
+              <button onClick={() => handleVolumeChange(isMuted ? (volume || 0.5) : 0)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }} aria-label={isMuted ? 'Activer le son' : 'Couper le son'}>
                 {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
               </button>
-              <input type="range" min={0} max={1} step={0.05} value={isMuted ? 0 : volume} onChange={e => handleVolumeChange(e.target.value)} style={{ width: '70px', accentColor: 'var(--primary)', cursor: 'pointer' }} />
+              <input type="range" min={0} max={1} step={0.05} value={isMuted ? 0 : volume} onChange={e => handleVolumeChange(e.target.value)} style={{ width: '70px', accentColor: 'var(--primary)', cursor: 'pointer' }} aria-label="Volume" aria-valuemin="0" aria-valuemax="1" aria-valuenow={isMuted ? 0 : volume} />
             </div>
 
-            <span style={{ fontSize: '13px', color: 'white', fontWeight: 500, fontFamily: 'DM Sans, sans-serif' }}>
+            <span style={{ fontSize: '13px', color: 'white', fontWeight: 500, fontFamily: 'DM Sans, sans-serif' }} aria-live="polite">
               {formatTime(currentTime)} <span style={{ opacity: 0.5 }}>/</span> {formatTime(duration)}
             </span>
 
@@ -424,22 +433,22 @@ export default function VideoPlayerEnhanced() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600, textTransform: 'uppercase' }}>Vitesse</span>
-              <select value={playbackRate} onChange={e => { const v = Number(e.target.value); setPlaybackRate(v); if (videoRef.current) videoRef.current.playbackRate = v; }} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer', outline: 'none' }}>
+              <select value={playbackRate} onChange={e => { const v = Number(e.target.value); setPlaybackRate(v); if (videoRef.current) videoRef.current.playbackRate = v; }} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer', outline: 'none' }} aria-label="Vitesse de lecture">
                 {[0.5, 0.75, 1, 1.25, 1.5, 2].map(r => <option key={r} value={r} style={{ background: 'var(--bg-surface)' }}>{r}x</option>)}
               </select>
             </div>
 
-            <button onClick={handleFullscreen} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}>{isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}</button>
+            <button onClick={handleFullscreen} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }} aria-label={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}>{isFullscreen ? <Minimize size={22} /> : <Maximize size={22} />}</button>
           </div>
         </div>
 
-        <audio ref={content?.type === 'audio' ? videoRef : undefined} preload="auto" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+        <audio ref={content?.type === 'audio' ? videoRef : undefined} preload="auto" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} aria-label={content?.title || 'Lecteur audio'} />
       </div>
 
       {content && (
         <div className="player-info-grid" style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '48px', alignItems: 'start' }}>
           <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
               {content.accessType === 'premium' && <span className="badge badge-premium" style={{ padding: '4px 10px', fontSize: '11px' }}>★ Premium</span>}
               {content.accessType === 'paid' && <span className="badge badge-paid" style={{ padding: '4px 10px', fontSize: '11px' }}>{content.price / 1000}k Ar</span>}
               <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>{content.category}</span>

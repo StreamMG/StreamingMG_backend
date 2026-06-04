@@ -8,45 +8,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Restaurer l'utilisateur depuis le localStorage
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-
     if (storedUser && token) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        setUser(JSON.parse(storedUser));
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (err) {
         console.error('Failed to parse stored user:', err);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        localStorage.clear();
       }
     }
     setLoading(false);
   }, []);
 
+  const setAuthState = (userData, token, refreshToken) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', token);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  };
+
   const login = async (email, password) => {
     try {
       const res = await api.post('/auth/login', { email, password });
-      const userData = res.data.user;
-      const token = res.data.token;
-
-      // Mise à jour du state
-      setUser(userData);
-
-      // Stockage sécurisé
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', token);
-
-      // Stocker le refreshToken pour le renouvellement
-      if (res.data.refreshToken) {
-        localStorage.setItem('refreshToken', res.data.refreshToken);
-      }
-
-      // Mettre à jour le header Authorization
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
+      setAuthState(res.data.user, res.data.token, res.data.refreshToken);
       return { success: true };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Erreur de connexion';
@@ -62,21 +51,18 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     const token = localStorage.getItem('token');
-
-    // Nettoyage local immédiat: l'utilisateur doit être déconnecté même si l'API est indisponible.
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     delete api.defaults.headers.common['Authorization'];
-
     try {
       await api.post('/auth/logout', null, {
         timeout: 4000,
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
     } catch {
-      // Le nettoyage local est déjà fait. L'API peut être indisponible sans bloquer l'utilisateur.
+      // Local cleanup is already done
     }
   };
 
@@ -97,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, setAuthState, loading }}>
       {children}
     </AuthContext.Provider>
   );

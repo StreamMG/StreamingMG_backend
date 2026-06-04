@@ -6,14 +6,13 @@ import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setAuthState } = useAuth();
   const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Si déjà connecté, rediriger
   useEffect(() => {
     if (user) {
       navigate('/');
@@ -22,7 +21,7 @@ const Register = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.username) newErrors.username = 'Nom d\'utilisateur requis';
+    if (!formData.username) newErrors.username = 'Nom d'utilisateur requis';
     else if (formData.username.length < 3) newErrors.username = 'Minimum 3 caractères';
     else if (formData.username.length > 30) newErrors.username = 'Maximum 30 caractères';
     
@@ -51,15 +50,11 @@ const Register = () => {
         password: formData.password 
       });
       
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      if (res.data.refreshToken) {
-        localStorage.setItem('refreshToken', res.data.refreshToken);
-      }
+      // Utiliser le contexte pour définir l'état d'authentification
+      setAuthState(res.data.user, res.data.token, res.data.refreshToken);
       
-      // Redirection manuelle car le context ne met pas à jour immédiatement
+      // Naviguer sans recharger la page
       navigate('/');
-      window.location.reload();
     } catch (err) {
       const message = err.response?.data?.message || 'Une erreur est survenue';
       if (message.includes('Email')) {

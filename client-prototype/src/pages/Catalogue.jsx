@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
@@ -53,12 +53,10 @@ const Catalogue = () => {
     loadData();
   }, [user?._id]);
 
-  const audios = contents.filter(c => c.type === 'audio');
-  const videos = contents.filter(c => c.type === 'video');
-  const tutorials = contents.filter(c => c.isTutorial);
-  const docs = contents.filter(c =>
-    c.category === 'documentaire' || c.category === 'film'
-  );
+  const audios = useMemo(() => contents.filter(c => c.type === 'audio'), [contents]);
+  const videos = useMemo(() => contents.filter(c => c.type === 'video'), [contents]);
+  const tutorials = useMemo(() => contents.filter(c => c.isTutorial), [contents]);
+  const docs = useMemo(() => contents.filter(c => c.category === 'documentaire' || c.category === 'film'), [contents]);
 
   useEffect(() => {
     setRotatedDocs(docs);
@@ -66,6 +64,7 @@ const Catalogue = () => {
 
     const interval = setInterval(() => {
       setRotatedDocs(prevDocs => {
+        if (prevDocs.length === 0) return [];
         const newDocs = [...prevDocs];
         const first = newDocs.shift();
         newDocs.push(first);
@@ -76,13 +75,11 @@ const Catalogue = () => {
     return () => clearInterval(interval);
   }, [docs]);
 
-  const mainFeatured = featured.length > 0 ? featured[0] : (contents.length > 0 ? contents[0] : null);
-  const sideFeatured = featured.length > 1 ? featured.slice(1, 4) : contents.slice(1, 4);
+  const mainFeatured = useMemo(() => featured.length > 0 ? featured[0] : (contents.length > 0 ? contents[0] : null), [featured, contents]);
+  const sideFeatured = useMemo(() => featured.length > 1 ? featured.slice(1, 4) : contents.slice(1, 4), [featured, contents]);
 
   const getProgressForTutorial = (tutorialId) => {
-    const p = tutorialProgress.find(tp =>
-      (tp.contentId?._id || tp.contentId) === tutorialId
-    );
+    const p = tutorialProgress.find(tp => (tp.contentId?._id || tp.contentId) === tutorialId);
     return p ? Math.round(p.percentComplete || 0) : null;
   };
 
@@ -149,7 +146,6 @@ const Catalogue = () => {
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {/* Background decoration */}
       <div style={{
         position: 'absolute',
         top: '-20px',
@@ -216,13 +212,7 @@ const Catalogue = () => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: 'var(--bg-base)',
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-base)' }}>
         <div className="loading-spinner" />
       </div>
     );
@@ -339,11 +329,7 @@ const Catalogue = () => {
             padding: '80px 40px',
             color: 'var(--text-muted)',
           }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '16px',
-              opacity: 0.3,
-            }}>🎬</div>
+            <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.3 }}>🎬</div>
             <div style={{
               fontFamily: "'Sora', sans-serif",
               fontSize: '20px',

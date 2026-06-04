@@ -682,6 +682,70 @@ h4 {
     flex: 0 0 260px;
     width: 260px;
   }
+
+  /* Responsive player styles */
+  .player-wrapper {
+    padding: 16px !important;
+  }
+
+  .player-container {
+    border-radius: 12px !important;
+  }
+
+  .audio-player-overlay {
+    gap: 16px !important;
+    padding: 16px !important;
+  }
+
+  .audio-player-thumb {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 12px !important;
+  }
+
+  .audio-player-title {
+    font-size: 16px !important;
+  }
+
+  .controls-overlay {
+    padding: 24px 16px 16px !important;
+    gap: 12px !important;
+  }
+
+  .controls-row {
+    gap: 12px !important;
+  }
+
+  .controls-row button {
+    padding: 2px !important;
+  }
+
+  .controls-row button svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .controls-row input[type="range"] {
+    width: 50px !important;
+  }
+
+  .controls-row span {
+    font-size: 11px !important;
+  }
+
+  .player-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    margin-top: 24px !important;
+  }
+
+  .player-info-grid h1 {
+    font-size: 24px !important;
+  }
+
+  .player-info-grid p {
+    font-size: 14px !important;
+  }
 }
 
 /* Responsive grid for FeaturedGrid */

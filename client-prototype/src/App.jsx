@@ -46,11 +46,12 @@ const PageLoader = () => (
 
 function App() {
   const { user } = useAuth();
+  const location = useLocation();
 
   return (
     <Layout>
       <Suspense fallback={<PageLoader />}>
-        <Routes>
+        <Routes key={location.pathname}>
           {/* Auth — public */}
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
@@ -58,19 +59,19 @@ function App() {
           {/* App — public & private mixes */}
           <Route path="/" element={<Catalogue />} />
           <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
-          
+
           {/* App — private */}
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          
+
           {/* Protected par Rôles */}
           <Route path="/provider" element={<RoleRoute allowedRoles={['provider', 'admin']}><Provider /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute allowedRoles={['admin']}><Admin /></RoleRoute>} />
-          
+
           <Route path="/musique" element={<Music />} />
           <Route path="/tutoriels" element={<PrivateRoute><Tutoriels /></PrivateRoute>} />
           <Route path="/subscribe" element={<PrivateRoute><Payment /></PrivateRoute>} />
           <Route path="/purchase" element={<PrivateRoute><Payment /></PrivateRoute>} />
-          
+
           {/* 404 Catch-all */}
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" />} />
