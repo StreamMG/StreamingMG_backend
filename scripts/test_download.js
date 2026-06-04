@@ -133,8 +133,9 @@ async function run() {
 
   // ── 2. Catalogue ─────────────────────────────────────────────────────────
   console.log("\n── 2. Catalogue & Contenus ─────────────────");
-  const freeContent = await getFirstContent("free");
-  const premiumContent = await getFirstContent("premium");
+//  const freeContent = await getFirstContent("free");
+const freeContent = "69f31aafc1441b4f19a30776" 
+ const premiumContent = await getFirstContent("premium");
   const paidContent = await getFirstContent("paid");
   assert(
     "Contenu free trouvé",

@@ -1,37 +1,43 @@
 #!/bin/bash
 
 # --- CONFIGURATION ---
-PORT=3001
-APP_NAME="node server.js" # Nom partiel pour identifier le processus
+APP_NAME="server.js"
+LOG_FILE="./logs/console.log"
 
-# Couleurs pour le terminal
+# Couleurs
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+start_server() {
+    echo -e "${GREEN}Démarrage du serveur Node.js...${NC}"
+
+    # IMPORTANT: Alwaysdata fournit PORT automatiquement
+    export NODE_ENV=production
+
+    # On ne fixe PAS de port, on laisse process.env.PORT
+    npm start > "$LOG_FILE" 2>&1 &
+
+    echo -e "${GREEN}Serveur lancé.${NC}"
+    echo "Logs: tail -f $LOG_FILE"
+}
 
 stop_server() {
-    echo -e "${RED}Arrêt du serveur sur le port $PORT...${NC}"
-    # Trouve le PID utilisant le port et le tue
-    PID=$(lsof -t -i:$PORT)
-    if [ -z "$PID" ]; then
-        # Si non trouvé par port, on cherche par nom de processus
-        PID=$(ps aux | grep "$APP_NAME" | grep -v grep | awk '{print $2}')
-    fi
+    echo -e "${RED}Arrêt du serveur...${NC}"
 
-    if [ ! -z "$PID" ]; then
-        kill -9 $PID
-        echo -e "${GREEN}Serveur arrêté (PID: $PID).${NC}"
+    PID=$(pgrep -f "$APP_NAME")
+
+    if [ -z "$PID" ]; then
+        echo "Aucun processus trouvé."
     else
-        echo -e "Aucun serveur en cours d'exécution."
+        kill -9 $PID
+        echo -e "${GREEN}Serveur arrêté (PID: $PID)${NC}"
     fi
 }
 
-start_server() {
-    echo -e "${GREEN}Démarrage du serveur...${NC}"
-    # On lance en arrière-plan et on redirige les logs
-    nohup npm start > ./logs/console.log 2>&1 &
-    echo -e "${GREEN}Serveur lancé en arrière-plan.${NC}"
-    echo -e "Tu peux voir les logs avec : tail -f ./logs/console.log"
+status_server() {
+    echo "=== STATUS NODE ==="
+    pgrep -fl "$APP_NAME" || echo "Aucun serveur actif"
 }
 
 case "$1" in
@@ -47,8 +53,7 @@ case "$1" in
         start_server
         ;;
     status)
-        ps aux | grep "$APP_NAME" | grep -v grep
-        lsof -i:$PORT
+        status_server
         ;;
     *)
         echo "Usage: $0 {start|stop|restart|status}"
