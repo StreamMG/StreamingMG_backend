@@ -13,6 +13,7 @@ const Provider = lazy(() => import('./pages/Provider'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Payment = lazy(() => import('./pages/Payment'));
 const Tutoriels = lazy(() => import('./pages/Tutoriels'));
+const Music = lazy(() => import('./pages/Music'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 /**
@@ -65,6 +66,7 @@ function App() {
           <Route path="/provider" element={<RoleRoute allowedRoles={['provider', 'admin']}><Provider /></RoleRoute>} />
           <Route path="/admin" element={<RoleRoute allowedRoles={['admin']}><Admin /></RoleRoute>} />
           
+          <Route path="/musique" element={<Music />} />
           <Route path="/tutoriels" element={<PrivateRoute><Tutoriels /></PrivateRoute>} />
           <Route path="/subscribe" element={<PrivateRoute><Payment /></PrivateRoute>} />
           <Route path="/purchase" element={<PrivateRoute><Payment /></PrivateRoute>} />

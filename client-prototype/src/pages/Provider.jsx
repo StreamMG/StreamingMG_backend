@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Upload, Plus, Edit, Trash2, Eye, EyeOff, Film, Music, 
   Image, DollarSign, Star, Clock, BarChart3, Settings, 
-  CheckCircle, AlertCircle, Sparkles
+  CheckCircle, AlertCircle, Sparkles, X
 } from 'lucide-react';
 import api from '../api';
 import Cropper from 'react-easy-crop';
