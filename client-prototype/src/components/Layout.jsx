@@ -29,11 +29,11 @@ export default function Layout({ children }) {
       background: 'var(--bg-base)'
     }}>
       <Topbar />
-
-      <div style={{
-        flex: 1,
+      
+      <div className="main-content" style={{ 
+        flex: 1, 
         paddingTop: '64px',
-        paddingBottom: '40px'
+        paddingBottom: '40px' 
       }}>
         {children}
       </div>

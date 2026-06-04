@@ -96,11 +96,14 @@ const Register = () => {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '460px' }} className="animate-fade-in">
-        <div style={{
-          background: 'rgba(23, 27, 38, 0.85)', backdropFilter: 'blur(20px)',
-          border: '1px solid var(--bg-border)', borderRadius: '24px',
-          padding: '48px 40px', boxShadow: '0 32px 80px rgba(0,0,0,0.5)'
-        }}>
+        <div 
+          className="auth-card"
+          style={{
+            background: 'rgba(23, 27, 38, 0.85)', backdropFilter: 'blur(20px)',
+            border: '1px solid var(--bg-border)', borderRadius: '24px',
+            padding: '48px 40px', boxShadow: '0 32px 80px rgba(0,0,0,0.5)'
+          }}
+        >
           {/* Logo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', gap: '10px' }}>
             <img src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" alt="StreamMG Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />

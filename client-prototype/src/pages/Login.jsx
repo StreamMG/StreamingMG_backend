@@ -48,14 +48,17 @@ export default function Login() {
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '420px' }} className="animate-fade-in">
         {/* Card */}
-        <div style={{
-          background: 'rgba(23, 27, 38, 0.85)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid var(--bg-border)',
-          borderRadius: '24px',
-          padding: '48px 40px',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.5)'
-        }}>
+        <div 
+          className="auth-card"
+          style={{
+            background: 'rgba(23, 27, 38, 0.85)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid var(--bg-border)',
+            borderRadius: '24px',
+            padding: '48px 40px',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.5)'
+          }}
+        >
           {/* Logo */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', gap: '12px' }}>
             <img

@@ -38,15 +38,13 @@ export default function ContentCard({
   const isWide = variant === 'wide';
   const isTutorial = variant === 'tutorial';
 
-  const cardWidth = isWide ? '256px' : isTutorial ? '188px' : '170px';
   const thumbPaddingTop = isWide ? '56.25%' : '143%';
 
   return (
     <Link
       to={`/watch/${content._id}`}
+      className={`content-card-${variant}`}
       style={{
-        flex: `0 0 ${cardWidth}`,
-        width: cardWidth,
         background: 'var(--bg-surface)',
         borderRadius: '16px',
         border: '1px solid rgba(255,255,255,0.05)',

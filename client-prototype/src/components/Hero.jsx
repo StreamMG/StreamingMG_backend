@@ -84,13 +84,16 @@ export default function Hero({ mainContent, sideContents = [] }) {
       }} />
 
       {/* ── Main content (left side) ── */}
-      <div style={{
-        position: 'absolute',
-        bottom: '14%',
-        left: '48px',
-        zIndex: 5,
-        maxWidth: '560px',
-      }}>
+      <div
+        className="hero-main-content"
+        style={{
+          position: 'absolute',
+          bottom: '14%',
+          left: '48px',
+          zIndex: 5,
+          maxWidth: '560px',
+        }}
+      >
         {/* Eyebrow */}
         <div style={{
           display: 'inline-flex',
@@ -233,16 +236,19 @@ export default function Hero({ mainContent, sideContents = [] }) {
 
       {/* ── Poster cards (right side) ── */}
       {sideContents.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          right: '48px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          gap: '16px',
-          zIndex: 4,
-          alignItems: 'flex-end',
-        }}>
+        <div
+          className="hero-side-posters"
+          style={{
+            position: 'absolute',
+            right: '48px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            gap: '16px',
+            zIndex: 4,
+            alignItems: 'flex-end',
+          }}
+        >
           {sideContents.slice(0, 3).map((item, index) => {
             const widths = ['160px', '190px', '160px'];
             const offsets = ['10px', '0px', '20px'];

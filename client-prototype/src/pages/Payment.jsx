@@ -237,7 +237,7 @@ const Payment = () => {
               <SuccessScreen message="Votre abonnement Premium est maintenant actif. Profitez de tous les contenus !" redirectTo="/profile" navigate={navigate} />
             </div>
             : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+              <div className="payment-grid">
 
                 {/* Left — Plans */}
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', overflow: 'hidden' }}>

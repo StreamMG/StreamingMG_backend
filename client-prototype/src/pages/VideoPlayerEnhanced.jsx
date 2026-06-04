@@ -322,6 +322,7 @@ export default function VideoPlayerEnhanced() {
 
       <div
         ref={containerRef}
+        className="player-container"
         style={{
           position: 'relative', background: '#000', borderRadius: '16px',
           overflow: 'hidden', aspectRatio: content?.type === 'audio' ? '21/4' : '16/9',
@@ -332,13 +333,13 @@ export default function VideoPlayerEnhanced() {
       >
         {/* Main Video/Audio element */}
         {content?.type === 'audio' ? (
-          <div className="audio-overlay" style={{
+          <div className="audio-player-overlay" style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: '24px', padding: '24px',
             background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-raised))'
           }}>
-            <img src={getImageUrl(content.thumbnail)} alt="" className={isPlaying ? 'animate-pulse' : 'opacity-80'} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }} />
+            <img src={getImageUrl(content.thumbnail)} alt="" className={`audio-player-thumb ${isPlaying ? 'animate-pulse' : 'opacity-80'}`} style={{ width: '100px', height: '100px', borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>{content.title}</div>
+              <div className="audio-player-title" style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, marginBottom: '4px' }}>{content.title}</div>
               <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{content.category} • {content.artist}</div>
             </div>
           </div>
@@ -436,7 +437,7 @@ export default function VideoPlayerEnhanced() {
       </div>
 
       {content && (
-        <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '48px', alignItems: 'start' }}>
+        <div className="player-info-grid" style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '48px', alignItems: 'start' }}>
           <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               {content.accessType === 'premium' && <span className="badge badge-premium" style={{ padding: '4px 10px', fontSize: '11px' }}>★ Premium</span>}

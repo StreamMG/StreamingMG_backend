@@ -27,6 +27,7 @@ function FeaturedCard({ content, isMain }) {
   return (
     <Link
       to={`/watch/${content._id}`}
+      className={`featured-grid-card ${isMain ? 'featured-grid-main' : ''}`}
       style={{
         position: 'relative',
         borderRadius: '32px',
@@ -154,13 +155,7 @@ export default function FeaturedGrid({ items = [] }) {
   const subs = items.slice(1, 3);
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '1.8fr 1fr',
-      gridTemplateRows: '1fr 1fr',
-      gap: '16px',
-      height: '380px',
-    }}>
+    <div className="featured-grid">
       <FeaturedCard content={main} isMain />
       {subs.map(item => (
         <FeaturedCard key={item._id} content={item} isMain={false} />

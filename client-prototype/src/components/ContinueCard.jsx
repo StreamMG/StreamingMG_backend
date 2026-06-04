@@ -28,9 +28,10 @@ export default function ContinueCard({ item }) {
   return (
     <Link
       to={`/watch/${content._id}`}
+      className="continue-card"
       style={{
-        flex: '0 0 300px',
-        width: '300px',
+        flex: '1 1 300px',
+        maxWidth: '300px',
         background: 'var(--bg-surface)',
         borderRadius: '16px',
         border: '1px solid rgba(255,255,255,0.05)',

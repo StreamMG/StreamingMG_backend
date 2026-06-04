@@ -91,7 +91,7 @@ export default function Topbar() {
         </Link>
 
         {/* ── Nav links (Desktop only) ── */}
-        <nav className="topbar-nav">
+        <nav className="topbar-nav topbar-desktop-only">
           <ul style={{
             display: 'flex',
             alignItems: 'center',
@@ -141,13 +141,13 @@ export default function Topbar() {
         {/* ── Right section ── */}
         <div className="topbar-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           {/* Search (Desktop only) */}
-          <div className="topbar-search-container">
+          <div className="topbar-search-container topbar-desktop-only">
             <SearchPill value={search} onChange={setSearch} />
           </div>
 
           {/* Notifications (Desktop only) */}
           <button
-            className="topbar-notifications-btn"
+            className="topbar-notifications-btn topbar-desktop-only"
             style={{
               width: '36px',
               height: '36px',

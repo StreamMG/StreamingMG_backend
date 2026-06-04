@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  BarChart3, Users, Film, Music, DollarSign, TrendingUp, 
+import {
+  BarChart3, Users, Film, Music, DollarSign, TrendingUp,
   Check, X, Eye, Edit, Trash2, Settings, Crown, Star,
   Package, Clock, AlertCircle, CheckCircle, Shield, Ban
 } from 'lucide-react';
@@ -22,22 +22,16 @@ const Admin = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', description: '', onConfirm: null, variant: 'danger' });
 
-  useEffect(() => {
-    loadStats();
-    if (activeTab === 'contents') loadContents();
-    if (activeTab === 'users') loadUsers();
-  }, [activeTab, filter]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await api.get('/admin/stats');
       setStats(response.data);
     } catch (err) {
       console.error('Erreur stats:', err);
     }
-  };
+  }, []);
 
-  const loadContents = async () => {
+  const loadContents = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -49,9 +43,9 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter.isPublished]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -63,13 +57,24 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter.role]);
+
+  useEffect(() => {
+    loadStats();
+    if (activeTab === 'contents') {
+      loadContents();
+    }
+    if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [activeTab, loadContents, loadUsers, loadStats]);
+
 
   const handleApproveContent = async (contentId) => {
     setConfirmDialog({
       isOpen: true,
       title: 'Approuver ce contenu ?',
-      description: 'Ce contenu sera visible par tous les utilisateurs. Confirmez-vous l\'approbation ?',
+      description: "Ce contenu sera visible par tous les utilisateurs. Confirmez-vous l'approbation ?",
       confirmLabel: 'Approuver',
       cancelLabel: 'Annuler',
       variant: 'success',
@@ -121,7 +126,9 @@ const Admin = () => {
     setConfirmDialog({
       isOpen: true,
       title: isActive ? 'Désactiver cet utilisateur ?' : 'Activer cet utilisateur ?',
-      description: `${isActive ? 'L\'utilisateur ne pourra plus se connecter à la plateforme.' : 'L\'utilisateur pourra à nouveau se connecter à la plateforme.'}\n\nUtilisateur: ${username}`,
+      description: `${isActive ? "L'utilisateur ne pourra plus se connecter à la plateforme." : "L'utilisateur pourra à nouveau se connecter à la plateforme."}
+
+Utilisateur: ${username}`,
       confirmLabel: isActive ? 'Désactiver' : 'Activer',
       cancelLabel: 'Annuler',
       variant: isActive ? 'warning' : 'success',
@@ -212,6 +219,7 @@ const Admin = () => {
       {/* ── Onglets ── */}
       <section style={{ 
         display: 'flex', 
+        flexWrap: 'wrap',
         gap: '4px', 
         background: 'var(--bg-raised)', 
         padding: '6px', 
@@ -371,38 +379,46 @@ const Admin = () => {
                 <h3>Aucun utilisateur</h3>
               </div>
             ) : (
-              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--bg-border)', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                      <th style={{ padding: '16px 24px', fontWeight: 600 }}>Utilisateur</th>
-                      <th style={{ padding: '16px 24px', fontWeight: 600 }}>Rôle</th>
-                      <th style={{ padding: '16px 24px', fontWeight: 600 }}>Statut</th>
-                      <th style={{ padding: '16px 24px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(u => (
-                      <tr key={u._id} style={{ borderBottom: '1px solid var(--bg-border)' }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ fontFamily: 'Sora', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{u.username}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{u.email}</div>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>{getRoleBadge(u.role)}</td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: u.isActive ? 'rgba(46,194,126,0.1)' : 'rgba(237,51,59,0.1)', color: u.isActive ? 'var(--teal)' : 'var(--error)' }}>
-                            {u.isActive ? 'Actif' : 'Inactif'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <button onClick={() => handleToggleUser(u._id, u.isActive)} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: u.isActive ? 'rgba(237,51,59,0.1)' : 'rgba(46,194,126,0.1)', color: u.isActive ? 'var(--error)' : 'var(--teal)' }}>
-                            {u.isActive ? 'Désactiver' : 'Activer'}
-                          </button>
-                        </td>
+              <div style={{
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--bg-border)',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                width: '100%'
+              }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--bg-border)', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        <th style={{ padding: '16px 24px', fontWeight: 600 }}>Utilisateur</th>
+                        <th style={{ padding: '16px 24px', fontWeight: 600 }}>Rôle</th>
+                        <th style={{ padding: '16px 24px', fontWeight: 600 }}>Statut</th>
+                        <th style={{ padding: '16px 24px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {users.map(u => (
+                        <tr key={u._id} style={{ borderBottom: '1px solid var(--bg-border)' }}>
+                          <td style={{ padding: '16px 24px' }}>
+                            <div style={{ fontFamily: 'Sora', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{u.username}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{u.email}</div>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>{getRoleBadge(u.role)}</td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <span style={{ display: 'inline-block', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: u.isActive ? 'rgba(46,194,126,0.1)' : 'rgba(237,51,59,0.1)', color: u.isActive ? 'var(--teal)' : 'var(--error)' }}>
+                              {u.isActive ? 'Actif' : 'Inactif'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                            <button onClick={() => handleToggleUser(u._id, u.isActive, u.username)} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: u.isActive ? 'rgba(237,51,59,0.1)' : 'rgba(46,194,126,0.1)', color: u.isActive ? 'var(--error)' : 'var(--teal)' }}>
+                              {u.isActive ? 'Désactiver' : 'Activer'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -412,31 +428,31 @@ const Admin = () => {
 
       {/* ── Modal Rejet ── */}
       {selectedContent && (
-        <div style={{ 
-          position: 'fixed', 
-          inset: 0, 
-          zIndex: 1000, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          background: 'rgba(0,0,0,0.85)', 
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.85)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           animation: 'fadeIn 200ms ease-out'
         }}>
-          <div style={{ 
-            background: 'var(--bg-surface)', 
-            border: '1px solid var(--bg-border)', 
-            borderRadius: '24px', 
-            padding: '0', 
-            width: '100%', 
-            maxWidth: '520px', 
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--bg-border)',
+            borderRadius: '24px',
+            padding: '0',
+            width: '100%',
+            maxWidth: '520px',
             boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
             animation: 'slideUp 250ms ease-out',
             overflow: 'hidden'
           }}>
             {/* Header */}
-            <div style={{ 
+            <div style={{
               background: 'linear-gradient(135deg, rgba(232,197,71,0.15), rgba(237,51,59,0.1))',
               padding: '24px 32px',
               borderBottom: '1px solid var(--bg-border)',
@@ -444,13 +460,13 @@ const Admin = () => {
               alignItems: 'center',
               gap: '16px'
             }}>
-              <div style={{ 
-                width: '56px', 
-                height: '56px', 
-                borderRadius: '14px', 
-                background: 'rgba(232,197,71,0.2)', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '14px',
+                background: 'rgba(232,197,71,0.2)',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--gold)'
               }}>
