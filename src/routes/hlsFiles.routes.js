@@ -36,8 +36,7 @@ router.use(antiAspirationLimiter);
 // ── Règle Hybride : Intercepteur Mobile pour le Manifest ── 
 // Permet de réécrire le manifeste dynamiquement pour apposer le Token sur tous les segments .ts (Expo-AV)
 router.get('/index.m3u8', async (req, res, next) => {
-  // Si ce n'est pas un lecteur Mobile, on ignore l'interception et le fichier est servi tel quel par express.static
-  if (req.hlsPayload?.p !== 'mobile') return next();
+
 
   const { contentId } = req.params;
   const filePath = path.resolve(process.cwd(), 'uploads/hls', contentId, 'index.m3u8');
