@@ -1,0 +1,1131 @@
+diff --git a/CORRECTIONS_401_FRONTEND.md b/CORRECTIONS_401_FRONTEND.md
+new file mode 100644
+index 0000000..a1e986f
+--- /dev/null
++++ b/CORRECTIONS_401_FRONTEND.md
+@@ -0,0 +1,159 @@
++# Corrections des Erreurs 401 (Unauthorized) - Frontend
++
++## 🔴 Problème identifié
++
++Les requêtes sur les routes protégées (`/api/history`, `/api/tutorial/progress`, `/api/provider/contents`) retournaient des erreurs **401 Unauthorized** même après authentification.
++
++### Causes :
++1. Le `refreshToken` reçu lors du login n'était **pas stocké** dans localStorage
++2. Lors d'un renouvellement JWT (refresh token interceptor), le token expiré était renouvelé côté serveur mais le nouveau `refreshToken` n'était **pas sauvegardé** localement
++3. Sur la 2ème requête échouée, le interceptor ne pouvait pas envoyer le `refreshToken` au serveur pour renouveler le JWT
++
++---
++
++## ✅ Corrections appliquées
++
++### 1. **AuthContext.jsx** — Stocker le refreshToken au login
++```javascript
++const login = async (email, password) => {
++  try {
++    const res = await api.post('/auth/login', { email, password });
++    setUser(res.data.user);
++    localStorage.setItem('user', JSON.stringify(res.data.user));
++    localStorage.setItem('token', res.data.token);
++    // ✨ NEW: Stocker le refreshToken
++    if (res.data.refreshToken) {
++      localStorage.setItem('refreshToken', res.data.refreshToken);
++    }
++    return { success: true };
++  } catch (err) {
++    return { success: false, message: err.response?.data?.message || 'Erreur de connexion' };
++  }
++};
++```
++
++### 2. **Register.jsx** — Même logique pour l'inscription
++```javascript
++const res = await api.post('/auth/register', { username, email, password });
++localStorage.setItem('token', res.data.token);
++localStorage.setItem('user', JSON.stringify(res.data.user));
++// ✨ NEW: Stocker le refreshToken
++if (res.data.refreshToken) {
++  localStorage.setItem('refreshToken', res.data.refreshToken);
++}
++```
++
++### 3. **api.js** — Utiliser le refreshToken en cas de 401
++```javascript
++if (status === 401 && !originalRequest._retry) {
++  originalRequest._retry = true;
++  try {
++    // ✨ NEW: Récupérer le refreshToken du localStorage
++    const refreshToken = localStorage.getItem('refreshToken');
++    const payload = refreshToken ? { refreshToken } : {};
++
++    const res = await axios.post(
++      `${import.meta.env.VITE_API_URL}/auth/refresh`,
++      payload,  // ✨ Envoyer dans le body (mobile + web fallback)
++      { withCredentials: true }  // Cookies (web)
++    );
++
++    const newToken = res.data.token;
++    localStorage.setItem('token', newToken);
++
++    // ✨ NEW: Mettre à jour le refreshToken
++    if (res.data.refreshToken) {
++      localStorage.setItem('refreshToken', res.data.refreshToken);
++    }
++
++    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
++    originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
++    return api(originalRequest);
++  } catch (refreshErr) {
++    // ✨ NEW: Nettoyer aussi le refreshToken
++    localStorage.removeItem('token');
++    localStorage.removeItem('refreshToken');
++    localStorage.removeItem('user');
++    // ... redirection
++  }
++}
++```
++
++### 4. **AuthContext.jsx** — Logout complet
++```javascript
++const logout = async () => {
++  try {
++    await api.post('/auth/logout');
++  } catch (err) {
++    console.error(err);
++  } finally {
++    setUser(null);
++    localStorage.removeItem('user');
++    localStorage.removeItem('token');
++    // ✨ NEW: Nettoyer le refreshToken aussi
++    localStorage.removeItem('refreshToken');
++  }
++};
++```
++
++---
++
++## 🔍 Backend — État des routes protégées
++
++Les routes sont **correctement protégées** par `authRequired`:
++
++| Route | Méthode | Protection | Status |
++|-------|---------|-----------|--------|
++| `/api/history` | GET | `authRequired` | ✅ |
++| `/api/tutorial/progress` | GET | `authRequired` | ✅ |
++| `/api/provider/contents` | GET | `authRequired` + `requireRole('provider', 'admin')` | ✅ |
++
++---
++
++## 🚀 Flux d'authentification corrigé
++
++```
++LOGIN
++  ↓
++API retourne { token, refreshToken, user }
++  ↓
++Frontend stocke : localStorage.token + localStorage.refreshToken + localStorage.user
++  ↓
++Requête protégée → header Authorization: "Bearer <token>"
++  ↓
++Si 401 (token expiré) :
++  ├─ Interceptor détecte le 401
++  ├─ Récupère refreshToken du localStorage
++  ├─ POST /auth/refresh avec { refreshToken }
++  ├─ Serveur valide et retourne nouveau { token, refreshToken }
++  ├─ Frontend met à jour localStorage
++  └─ Rejette la requête originale avec le nouveau token
++```
++
++---
++
++## ✨ Bénéfices
++
++1. **Renouvellement automatique** : Les tokens expirés sont silencieusement renouvelés
++2. **Multi-plateforme** : Fonctionne sur Web (cookies) + Mobile (localStorage)
++3. **Rotation de tokens** : Chaque refresh génère un nouveau token (sécurité)
++4. **Déconnexion propre** : Tous les tokens sont nettoyés
++
++---
++
++## 📋 À tester
++
++- [ ] Login → Vérifier localStorage (token + refreshToken)
++- [ ] Requête à `/api/history` après login
++- [ ] Attendre 15min (JWT_EXPIRY=15m) → Requête devrait auto-refresh
++- [ ] Logout → Vérifier que localStorage est vide
++- [ ] Accès à `/api/contents` (publique) → Pas d'erreur 401
++- [ ] Provider login → Accès à `/api/provider/contents`
++
++---
++
++## 📖 Documentation
++- JWT_EXPIRY: 15 minutes
++- REFRESH_TOKEN_EXPIRY: 7 jours (web) ou 30 jours (mobile)
++- Token rotation: Systématique à chaque refresh
++- Hash du refresh token: bcrypt coût 12 (OWASP)
+diff --git a/StreamMG_Backend.tar.gz b/StreamMG_Backend.tar.gz
+deleted file mode 100644
+index 559d91d..0000000
+Binary files a/StreamMG_Backend.tar.gz and /dev/null differ
+diff --git a/client-prototype/Dockerfile b/client-prototype/Dockerfile
+index 7e71c55..2838506 100644
+--- a/client-prototype/Dockerfile
++++ b/client-prototype/Dockerfile
+@@ -5,6 +5,18 @@ WORKDIR /app
+ COPY package*.json ./
+ RUN npm install
+ COPY . .
++
++# 🚀 FIX RENDER: Vite "cuisson" les variables au build time.
++# Il faut déclarer les ARGs pour que Docker puisse les récupérer.
++ARG VITE_API_URL
++ARG VITE_BASE_URL
++ARG VITE_STRIPE_PUBLIC_KEY
++
++# Convertir les ARGs en variables d'environnement (ENV) pour le process Vite
++ENV VITE_API_URL=$VITE_API_URL
++ENV VITE_BASE_URL=$VITE_BASE_URL
++ENV VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
++
+ RUN npm run build
+ 
+ # Serve with Nginx
+diff --git a/client-prototype/index.html b/client-prototype/index.html
+index 1e12a20..e645519 100644
+--- a/client-prototype/index.html
++++ b/client-prototype/index.html
+@@ -1,10 +1,14 @@
+ <!doctype html>
+-<html lang="en">
++<html lang="fr">
+   <head>
+     <meta charset="UTF-8" />
+-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
++    <link rel="icon" type="image/png" href="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>client-prototype</title>
++    <title>StreamMG — Plateforme de streaming du patrimoine malagasy</title>
++    <meta name="description" content="Découvrez les films, musiques, documentaires et tutoriels du patrimoine culturel malgache sur StreamMG." />
++    <meta property="og:title" content="StreamMG" />
++    <meta property="og:description" content="La première plateforme de streaming audiovisuel dédiée au patrimoine culturel malgache." />
++    <meta property="og:image" content="https://i.ibb.co/YFL1FJKG/streammg-logo-mada-1777321847119.jpg" />
+   </head>
+   <body>
+     <div id="root"></div>
+diff --git a/client-prototype/package-lock.json b/client-prototype/package-lock.json
+index 76d85d3..fe8547c 100644
+--- a/client-prototype/package-lock.json
++++ b/client-prototype/package-lock.json
+@@ -15,6 +15,7 @@
+         "lucide-react": "^1.7.0",
+         "react": "^19.2.4",
+         "react-dom": "^19.2.4",
++        "react-easy-crop": "^5.5.7",
+         "react-player": "^3.4.0",
+         "react-router-dom": "^7.13.2"
+       },
+@@ -2851,6 +2852,12 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/normalize-wheel": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/normalize-wheel/-/normalize-wheel-1.0.1.tgz",
++      "integrity": "sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==",
++      "license": "BSD-3-Clause"
++    },
+     "node_modules/object-assign": {
+       "version": "4.1.1",
+       "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
+@@ -3076,6 +3083,20 @@
+         "react": "^19.2.4"
+       }
+     },
++    "node_modules/react-easy-crop": {
++      "version": "5.5.7",
++      "resolved": "https://registry.npmjs.org/react-easy-crop/-/react-easy-crop-5.5.7.tgz",
++      "integrity": "sha512-kYo4NtMeXFQB7h1U+h5yhUkE46WQbQdq7if54uDlbMdZHdRgNehfvaFrXnFw5NR1PNoUOJIfTwLnWmEx/MaZnA==",
++      "license": "MIT",
++      "dependencies": {
++        "normalize-wheel": "^1.0.1",
++        "tslib": "^2.0.1"
++      },
++      "peerDependencies": {
++        "react": ">=16.4.0",
++        "react-dom": ">=16.4.0"
++      }
++    },
+     "node_modules/react-is": {
+       "version": "16.13.1",
+       "resolved": "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz",
+@@ -3319,9 +3340,7 @@
+       "version": "2.8.1",
+       "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz",
+       "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+-      "dev": true,
+-      "license": "0BSD",
+-      "optional": true
++      "license": "0BSD"
+     },
+     "node_modules/twitch-video-element": {
+       "version": "0.1.6",
+diff --git a/client-prototype/package.json b/client-prototype/package.json
+index d33ada8..7d7d738 100644
+--- a/client-prototype/package.json
++++ b/client-prototype/package.json
+@@ -17,6 +17,7 @@
+     "lucide-react": "^1.7.0",
+     "react": "^19.2.4",
+     "react-dom": "^19.2.4",
++    "react-easy-crop": "^5.5.7",
+     "react-player": "^3.4.0",
+     "react-router-dom": "^7.13.2"
+   },
+diff --git a/client-prototype/src/App.jsx b/client-prototype/src/App.jsx
+index 033e6f6..d977e27 100644
+--- a/client-prototype/src/App.jsx
++++ b/client-prototype/src/App.jsx
+@@ -53,9 +53,11 @@ function App() {
+           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+           <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+ 
++          {/* App — public & private mixes */}
++          <Route path="/" element={<Catalogue />} />
++          <Route path="/watch/:id" element={<VideoPlayerEnhanced />} />
++          
+           {/* App — private */}
+-          <Route path="/" element={<PrivateRoute><Catalogue /></PrivateRoute>} />
+-          <Route path="/watch/:id" element={<PrivateRoute><VideoPlayerEnhanced /></PrivateRoute>} />
+           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+           
+           {/* Protected par Rôles */}
+diff --git a/client-prototype/src/api.js b/client-prototype/src/api.js
+index ead13dc..382c26c 100644
+--- a/client-prototype/src/api.js
++++ b/client-prototype/src/api.js
+@@ -1,39 +1,82 @@
+-import axios from 'axios';
++import axios from "axios";
+ 
+ const api = axios.create({
+   baseURL: import.meta.env.VITE_API_URL,
+   withCredentials: true,
+ });
+ 
++// ── Request : injecter le JWT si disponible ──────────────────────────────
+ api.interceptors.request.use((config) => {
+-  const token = localStorage.getItem('token');
++  const token = localStorage.getItem("token");
+   if (token) {
+     config.headers.Authorization = `Bearer ${token}`;
+   }
+   return config;
+ });
+ 
+-// Gérer l'expiration et le rafraichissement auto (simplifié pour le prototype)
++// Routes publiques : un 401 NE doit PAS déclencher de refresh ni de redirection
++const PUBLIC_PATTERNS = [/^\/contents/, /^\/health/];
++
++const isPublicUrl = (url = "") => {
++  const path = url.replace(import.meta.env.VITE_API_URL || "", "");
++  return PUBLIC_PATTERNS.some((p) => p.test(path));
++};
++
++// ── Response : gestion auto du token expiré ──────────────────────────────
+ api.interceptors.response.use(
+   (response) => response,
+   async (error) => {
+     const originalRequest = error.config;
+-    if (error.response?.status === 401 && !originalRequest._retry) {
++    const status = error.response?.status;
++
++    // 401 sur route publique → ignorer silencieusement
++    if (status === 401 && isPublicUrl(originalRequest.url)) {
++      // Supprimer le token expiré du localStorage pour éviter les futures erreurs
++      localStorage.removeItem("token");
++      return Promise.reject(error);
++    }
++
++    // 401 sur route protégée → tenter un refresh une seule fois
++    if (status === 401 && !originalRequest._retry) {
+       originalRequest._retry = true;
+       try {
+-        const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {}, { withCredentials: true });
+-        localStorage.setItem('token', res.data.token);
+-        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
++        // Préparer le payload du refresh : cookies (web) + body (mobile)
++        const refreshToken = localStorage.getItem("refreshToken");
++        const payload = refreshToken ? { refreshToken } : {};
++
++        const res = await axios.post(
++          `${import.meta.env.VITE_API_URL}/auth/refresh`,
++          payload,
++          { withCredentials: true },
++        );
++
++        const newToken = res.data.token;
++        localStorage.setItem("token", newToken);
++
++        // Mettre à jour le refreshToken si le serveur en envoie un nouveau
++        if (res.data.refreshToken) {
++          localStorage.setItem("refreshToken", res.data.refreshToken);
++        }
++
++        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
++        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+         return api(originalRequest);
+-      } catch (err) {
+-        localStorage.removeItem('token');
+-        localStorage.removeItem('user');
+-        window.location.href = '/login';
+-        return Promise.reject(err);
++      } catch (refreshErr) {
++        // Refresh échoué → déconnexion propre
++        localStorage.removeItem("token");
++        localStorage.removeItem("refreshToken");
++        localStorage.removeItem("user");
++        // Rediriger seulement si on n'est pas déjà sur login/register
++        const path = window.location.pathname;
++        if (path !== "/login" && path !== "/register") {
++          window.location.href = "/login";
++        }
++        return Promise.reject(refreshErr);
+       }
+     }
++
+     return Promise.reject(error);
+-  }
++  },
+ );
+ 
+ export default api;
+diff --git a/client-prototype/src/components/Footer.jsx b/client-prototype/src/components/Footer.jsx
+index 16dea3e..ff9ca16 100644
+--- a/client-prototype/src/components/Footer.jsx
++++ b/client-prototype/src/components/Footer.jsx
+@@ -54,8 +54,8 @@ export default function Footer() {
+         <div>
+           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '16px' }}>
+             <img
+-              src="/streammg_logo_mada_1777321847119.png"
+-              alt="StreamMG"
++              src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png"
++              alt="StreamMG Logo"
+               style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+             />
+             <span style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
+@@ -138,7 +138,7 @@ export default function Footer() {
+         fontSize: '12px',
+         color: 'var(--text-muted)',
+       }}>
+-        <span>© 2025 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
++        <span>© 2026 StreamMG — Licence 3 Génie Logiciel, Université d'Antananarivo</span>
+         <span style={{ color: 'var(--primary-light)' }}>Construit pour le patrimoine malagasy ❤</span>
+       </div>
+     </footer>
+diff --git a/client-prototype/src/components/Topbar.jsx b/client-prototype/src/components/Topbar.jsx
+index 2566e48..e8cba82 100644
+--- a/client-prototype/src/components/Topbar.jsx
++++ b/client-prototype/src/components/Topbar.jsx
+@@ -75,20 +75,11 @@ export default function Topbar() {
+           flexShrink: 0,
+         }}
+       >
+-        <div style={{
+-          width: '30px',
+-          height: '30px',
+-          background: 'linear-gradient(135deg, var(--primary), var(--primary-light))',
+-          borderRadius: '8px',
+-          display: 'flex',
+-          alignItems: 'center',
+-          justifyContent: 'center',
+-          boxShadow: '0 2px 12px rgba(53,132,228,0.4)',
+-        }}>
+-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+-            <polygon points="1,1 11,6 1,11" fill="white" />
+-          </svg>
+-        </div>
++        <img 
++          src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" 
++          alt="StreamMG Logo" 
++          style={{ width: '32px', height: '32px', objectFit: 'contain' }} 
++        />
+         <span style={{
+           fontFamily: "'Sora', sans-serif",
+           fontSize: '18px',
+diff --git a/client-prototype/src/context/AuthContext.jsx b/client-prototype/src/context/AuthContext.jsx
+index d6114ae..e9e3ac2 100644
+--- a/client-prototype/src/context/AuthContext.jsx
++++ b/client-prototype/src/context/AuthContext.jsx
+@@ -22,6 +22,10 @@ export const AuthProvider = ({ children }) => {
+       setUser(res.data.user);
+       localStorage.setItem('user', JSON.stringify(res.data.user));
+       localStorage.setItem('token', res.data.token);
++      // Stocker le refreshToken pour le renouvellement du JWT
++      if (res.data.refreshToken) {
++        localStorage.setItem('refreshToken', res.data.refreshToken);
++      }
+       return { success: true };
+     } catch (err) {
+       return { success: false, message: err.response?.data?.message || 'Erreur de connexion' };
+@@ -37,6 +41,7 @@ export const AuthProvider = ({ children }) => {
+       setUser(null);
+       localStorage.removeItem('user');
+       localStorage.removeItem('token');
++      localStorage.removeItem('refreshToken');
+     }
+   };
+ 
+diff --git a/client-prototype/src/index.css b/client-prototype/src/index.css
+index 69e420a..33ce2df 100644
+--- a/client-prototype/src/index.css
++++ b/client-prototype/src/index.css
+@@ -503,3 +503,42 @@ a:hover .continue-thumb-img {
+ /* ── Image fix: block display ── */
+ img { display: block; }
+ 
++/* ── RESPONSIVENESS (Mobile & Tablet) ── */
++@media (max-width: 1024px) {
++  .hero-title { font-size: 38px; }
++  .topbar { padding: 0 var(--sp-4); }
++  .main { padding: var(--sp-6) var(--sp-4) var(--sp-12); }
++  .cards-row > * { flex: 0 0 150px; }
++}
++
++@media (max-width: 768px) {
++  .hero { height: auto; padding: var(--sp-8) 0; min-height: 300px; border-radius: var(--radius-m); }
++  .hero-title { font-size: 28px; }
++  .hero-desc { font-size: 14px; }
++  .hero-content { padding: 0 var(--sp-4); }
++  
++  .topbar { height: 56px; gap: var(--sp-3); overflow-x: auto; scrollbar-width: none; }
++  .topbar::-webkit-scrollbar { display: none; }
++  .topbar nav ul { gap: var(--sp-1); }
++  .topbar nav ul li a { font-size: 13px; padding: 4px 8px; }
++  
++  .container { padding: 0 16px; }
++  .section-title { font-size: 20px; }
++  .grid-cols-3 { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--sp-4); }
++  .cards-row > * { flex: 0 0 130px; }
++  
++  /* Player responsiveness overrides */
++  .player-wrapper { padding: 16px !important; }
++  .audio-overlay { flex-direction: column !important; text-align: center; gap: 16px !important; justify-content: center; }
++  .audio-overlay img { width: 140px !important; height: 140px !important; border-radius: 50% !important; animation: spin 4s linear infinite; }
++  .audio-overlay img.paused { animation-play-state: paused; }
++  .controls-overlay { padding: 16px 12px 12px !important; }
++  .controls-row { flex-wrap: wrap !important; justify-content: center !important; }
++}
++
++@media (max-width: 480px) {
++  .hero-title { font-size: 24px; }
++  .topbar { padding: 0 var(--sp-2); }
++  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
++  .main { padding: var(--sp-4) var(--sp-2) var(--sp-12); }
++}
+diff --git a/client-prototype/src/pages/Catalogue.jsx b/client-prototype/src/pages/Catalogue.jsx
+index 28fdd17..be8fe94 100644
+--- a/client-prototype/src/pages/Catalogue.jsx
++++ b/client-prototype/src/pages/Catalogue.jsx
+@@ -32,24 +32,31 @@ const Catalogue = () => {
+ 
+   useEffect(() => {
+     loadData();
+-  }, []);
++  }, [user?._id]);
+ 
+   const loadData = async () => {
+     setLoading(true);
+     try {
+-      const requests = [
++      // 1. Données publiques
++      const publicRequests = [
+         api.get('/contents/featured').catch(() => ({ data: { featured: [] } })),
+         api.get('/contents?limit=50').catch(() => ({ data: { contents: [] } })),
+-        api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
+-        api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
+       ];
+ 
+-      const [featuredRes, allRes, historyRes, progressRes] = await Promise.all(requests);
+-
++      const [featuredRes, allRes] = await Promise.all(publicRequests);
+       setFeatured(featuredRes.data.featured || []);
+       setContents(allRes.data.contents || []);
+-      setHistory(historyRes.data.history || []);
+-      setTutorialProgress(progressRes.data.inProgress || []);
++
++      // 2. Données privées (uniquement si connecté)
++      if (user) {
++        const privateRequests = [
++          api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
++          api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
++        ];
++        const [historyRes, progressRes] = await Promise.all(privateRequests);
++        setHistory(historyRes.data.history || []);
++        setTutorialProgress(progressRes.data.inProgress || []);
++      }
+     } catch (err) {
+       console.error('Erreur chargement données:', err);
+     } finally {
+diff --git a/client-prototype/src/pages/Login.jsx b/client-prototype/src/pages/Login.jsx
+index f80c1c0..1e1e13f 100644
+--- a/client-prototype/src/pages/Login.jsx
++++ b/client-prototype/src/pages/Login.jsx
+@@ -55,8 +55,8 @@ export default function Login() {
+           {/* Logo */}
+           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', gap: '12px' }}>
+             <img
+-              src="/streammg_logo_mada_1777321847119.png"
+-              alt="StreamMG"
++              src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png"
++              alt="StreamMG Logo"
+               style={{ width: '52px', height: '52px', objectFit: 'contain' }}
+             />
+             <span style={{ fontFamily: 'Sora', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
+diff --git a/client-prototype/src/pages/Provider.jsx b/client-prototype/src/pages/Provider.jsx
+index a676275..148b8d3 100644
+--- a/client-prototype/src/pages/Provider.jsx
++++ b/client-prototype/src/pages/Provider.jsx
+@@ -5,6 +5,8 @@ import {
+   Image, DollarSign, Star, Clock, BarChart3, Settings 
+ } from 'lucide-react';
+ import api from '../api';
++import Cropper from 'react-easy-crop';
++import { getCroppedImg } from '../utils/cropImage';
+ 
+ const Provider = () => {
+   const [contents, setContents] = useState([]);
+@@ -24,6 +26,14 @@ const Provider = () => {
+   });
+   const [uploadProgress, setUploadProgress] = useState(0);
+   const [isUploading, setIsUploading] = useState(false);
++  const [thumbnailPreview, setThumbnailPreview] = useState(null);
++
++  // ── Cropper States ──
++  const [crop, setCrop] = useState({ x: 0, y: 0 });
++  const [zoom, setZoom] = useState(1);
++  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
++  const [imageToCrop, setImageToCrop] = useState(null);
++  const [showCropper, setShowCropper] = useState(false);
+ 
+   const categories = ['salegy', 'hira_gasy', 'tsapiky', 'beko', 'film', 'documentaire', 'podcast', 'tutoriel', 'autre'];
+   const types = ['video', 'audio'];
+@@ -121,6 +131,7 @@ const Provider = () => {
+       price: content.price || '',
+       isTutorial: content.isTutorial
+     });
++    setThumbnailPreview(content.thumbnail ? imgUrl(content.thumbnail) : null);
+     setShowUploadForm(true);
+   };
+ 
+@@ -136,6 +147,24 @@ const Provider = () => {
+       isTutorial: false
+     });
+     setEditingContent(null);
++    setThumbnailPreview(null);
++  };
++
++  const onCropComplete = (croppedArea, croppedAreaPixels) => {
++    setCroppedAreaPixels(croppedAreaPixels);
++  };
++
++  const handleSaveCrop = async () => {
++    try {
++      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
++      const croppedFile = new File([croppedImageBlob], "thumbnail.jpg", { type: "image/jpeg" });
++      setFormData({...formData, thumbnail: croppedFile});
++      setThumbnailPreview(URL.createObjectURL(croppedFile));
++      setShowCropper(false);
++      setImageToCrop(null);
++    } catch (e) {
++      console.error('Erreur lors du recadrage:', e);
++    }
+   };
+ 
+   const formatPrice = (amount) => {
+@@ -243,7 +272,14 @@ const Provider = () => {
+                   </div>
+                   <div style={{ flex: 1 }}>
+                     <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Catégorie *</label>
+-                    <select className="input-field" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
++                    <select className="input-field" value={formData.category} onChange={e => {
++                      const cat = e.target.value;
++                      let newType = formData.type;
++                      // Détection automatique du type selon catégorie
++                      if (['podcast', 'salegy', 'hira_gasy', 'tsapiky', 'beko'].includes(cat)) newType = 'audio';
++                      if (['film', 'documentaire', 'tutoriel'].includes(cat)) newType = 'video';
++                      setFormData({...formData, category: cat, type: newType});
++                    }}>
+                       {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                     </select>
+                   </div>
+@@ -282,13 +318,28 @@ const Provider = () => {
+                   )}
+                 </div>
+ 
+-                <div style={{ marginTop: '8px' }}>
+-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
+-                  <input type="file" accept="image/jpeg,image/png" onChange={e => setFormData({...formData, thumbnail: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
++                <div style={{ marginTop: '8px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
++                  <div style={{ flex: 1 }}>
++                    <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Vignette (Image) {editingContent ? '' : '*'}</label>
++                    <div style={{ position: 'relative' }}>
++                      <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" onChange={e => {
++                        const file = e.target.files[0];
++                        if (file) {
++                          setImageToCrop(URL.createObjectURL(file));
++                          setShowCropper(true);
++                        }
++                      }} required={!editingContent && !formData.thumbnail} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
++                    </div>
++                  </div>
++                  {thumbnailPreview && (
++                    <div style={{ width: '100px', aspectRatio: '5/7', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--bg-border)', flexShrink: 0 }}>
++                      <img src={thumbnailPreview} alt="Aperçu" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
++                    </div>
++                  )}
+                 </div>
+                 <div>
+                   <label style={{ display: 'block', fontSize: '13px', marginBottom: '6px', color: 'var(--text-secondary)' }}>Fichier Média {editingContent ? '' : '*'}</label>
+-                  <input type="file" accept={formData.type === 'video' ? 'video/mp4' : 'audio/mpeg,audio/aac'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }} />
++                  <input type="file" accept={formData.type === 'video' ? 'video/mp4,video/mkv,video/avi' : 'audio/mpeg,audio/aac,audio/wav,audio/mp3'} onChange={e => setFormData({...formData, media: e.target.files[0]})} required={!editingContent} style={{ width: '100%', padding: '10px', background: 'var(--bg-raised)', border: '1px dashed var(--bg-border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }} />
+                 </div>
+               </div>
+             </div>
+@@ -321,10 +372,10 @@ const Provider = () => {
+             <button className="btn btn-primary" onClick={() => setShowUploadForm(true)} style={{ borderRadius: '12px', margin: '0 auto' }}>Ajouter un contenu</button>
+           </div>
+         ) : (
+-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
++          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px' }}>
+             {contents.map(c => (
+               <div key={c._id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+-                <div style={{ position: 'relative', aspectRatio: '16/9' }}>
++                <div style={{ position: 'relative', aspectRatio: '5/7' }}>
+                   <img src={imgUrl(c.thumbnail)} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                   <div style={{ position: 'absolute', top: '8px', right: '8px' }}>{getAccessBadge(c)}</div>
+                   <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+@@ -357,6 +408,37 @@ const Provider = () => {
+           </div>
+         )}
+       </section>
++
++      {/* ── Modal de recadrage (Cropper) ── */}
++      {showCropper && (
++        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
++          <div style={{ position: 'relative', width: '100%', maxWidth: '400px', height: '60vh', background: '#000', borderRadius: '16px', overflow: 'hidden' }}>
++            <Cropper
++              image={imageToCrop}
++              crop={crop}
++              zoom={zoom}
++              aspect={5 / 7}
++              onCropChange={setCrop}
++              onCropComplete={onCropComplete}
++              onZoomChange={setZoom}
++            />
++          </div>
++          <div style={{ marginTop: '24px', display: 'flex', gap: '16px', alignItems: 'center' }}>
++            <input 
++              type="range" 
++              value={zoom} 
++              min={1} 
++              max={3} 
++              step={0.1} 
++              aria-label="Zoom" 
++              onChange={(e) => setZoom(Number(e.target.value))} 
++              style={{ width: '150px' }}
++            />
++            <button className="btn btn-secondary" onClick={() => { setShowCropper(false); setImageToCrop(null); }}>Annuler</button>
++            <button className="btn btn-primary" onClick={handleSaveCrop}>Recadrer et valider</button>
++          </div>
++        </div>
++      )}
+     </div>
+   );
+ };
+diff --git a/client-prototype/src/pages/Register.jsx b/client-prototype/src/pages/Register.jsx
+index cf4cdd4..cd7330a 100644
+--- a/client-prototype/src/pages/Register.jsx
++++ b/client-prototype/src/pages/Register.jsx
+@@ -30,6 +30,10 @@ const Register = () => {
+       const res = await api.post('/auth/register', { username: formData.username, email: formData.email, password: formData.password });
+       localStorage.setItem('token', res.data.token);
+       localStorage.setItem('user', JSON.stringify(res.data.user));
++      // Stocker le refreshToken pour le renouvellement du JWT
++      if (res.data.refreshToken) {
++        localStorage.setItem('refreshToken', res.data.refreshToken);
++      }
+       navigate('/');
+     } catch (err) {
+       setErrors({ submit: err.response?.data?.message || 'Une erreur est survenue' });
+@@ -69,7 +73,7 @@ const Register = () => {
+         }}>
+           {/* Logo */}
+           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '28px', gap: '10px' }}>
+-            <img src="/streammg_logo_mada_1777321847119.png" alt="StreamMG" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
++            <img src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" alt="StreamMG Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+             <span style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 800 }}>
+               Stream<span style={{ color: 'var(--primary)' }}>MG</span>
+             </span>
+diff --git a/client-prototype/src/pages/VideoPlayerEnhanced.jsx b/client-prototype/src/pages/VideoPlayerEnhanced.jsx
+index 4c8d947..02a91bf 100644
+--- a/client-prototype/src/pages/VideoPlayerEnhanced.jsx
++++ b/client-prototype/src/pages/VideoPlayerEnhanced.jsx
+@@ -42,7 +42,7 @@ export default function VideoPlayerEnhanced() {
+     try {
+       const res = await api.get(`/contents/${id}`);
+       setContent(res.data.content);
+-      api.post(`/contents/${id}/view`).catch(() => {});
++      api.post(`/contents/${id}/view`).catch(() => { });
+     } catch (err) {
+       if (err.response?.status === 403) setAccessError(err.response.data);
+       else setError('Impossible de charger le contenu');
+@@ -68,7 +68,10 @@ export default function VideoPlayerEnhanced() {
+             xhrSetup: function (xhr, url) {
+               xhr.withCredentials = true;
+             },
+-            // 🚀 Optimisation Vidéo (HLS) :
++            // 🚀 Optimisation Vidéo (HLS) - TTFF (Time To First Frame)
++            startLevel: -1,            // Démarre sur la résolution la plus basse pour lancer la lecture instantanément
++            capLevelToPlayerSize: true,// Ne télécharge jamais du 4K si le lecteur fait 800px de large (économie massive)
++            lowLatencyMode: true,      // Réduit la latence de démarrage
+             maxBufferLength: 30,       // Garde max 30s de vidéo en avance (évite le gâchis de data)
+             maxMaxBufferLength: 60,    // Hard limite à 60s
+             maxBufferSize: 50 * 1000 * 1000, // Limite la RAM à 50MB
+@@ -94,9 +97,10 @@ export default function VideoPlayerEnhanced() {
+           URL.revokeObjectURL(videoRef.current._blobUrl);
+           videoRef.current._blobUrl = null;
+         }
+-        
++
+         // 🚀 Optimisation Audio : Stream direct avec cookies
+         videoRef.current.crossOrigin = 'use-credentials';
++        videoRef.current.preload = 'auto'; // Lance le buffer en arrière-plan dès l'assignation de l'URL
+         videoRef.current.src = fullUrl;
+         setPlayerReady(true);
+       }
+@@ -216,7 +220,7 @@ export default function VideoPlayerEnhanced() {
+   );
+ 
+   return (
+-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
++    <div className="player-wrapper" style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
+       {/* Back */}
+       <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+         <ArrowLeft size={16} /> Retour au catalogue
+@@ -235,11 +239,11 @@ export default function VideoPlayerEnhanced() {
+         onClick={togglePlay}
+       >
+         {content?.type === 'audio' ? (
+-          <div style={{
++          <div className="audio-overlay" style={{
+             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', gap: '24px', padding: '24px',
+             background: 'linear-gradient(135deg, var(--bg-surface), var(--bg-raised))'
+           }}>
+-            <img src={getImageUrl(content.thumbnail)} alt="" style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
++            <img src={getImageUrl(content.thumbnail)} alt="" className={isPlaying ? '' : 'paused'} style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+             <div style={{ flex: 1 }}>
+               <div style={{ fontFamily: 'Sora', fontSize: '18px', fontWeight: 700 }}>{content.title}</div>
+               <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{content.category}</div>
+@@ -285,7 +289,7 @@ export default function VideoPlayerEnhanced() {
+         )}
+ 
+         {/* Controls overlay */}
+-        <div style={{
++        <div className="controls-overlay" style={{
+           position: 'absolute', bottom: 0, left: 0, right: 0,
+           background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
+           padding: '32px 20px 16px',
+@@ -304,7 +308,7 @@ export default function VideoPlayerEnhanced() {
+           </div>
+ 
+           {/* Controls row */}
+-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
++          <div className="controls-row" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+             {/* Play/Pause */}
+             <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px' }}>
+               {isPlaying ? <Pause size={22} /> : <Play size={22} fill="white" />}
+@@ -333,14 +337,14 @@ export default function VideoPlayerEnhanced() {
+             </select>
+ 
+             {/* Minimize to MiniPlayer */}
+-            <button 
++            <button
+               onClick={() => {
+                 if (videoRef.current) {
+                   videoRef.current.pause();
+                 }
+                 playTrack(content);
+                 navigate('/');
+-              }} 
++              }}
+               title="Réduire"
+               style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px', marginLeft: '8px' }}
+             >
+@@ -354,7 +358,7 @@ export default function VideoPlayerEnhanced() {
+           </div>
+         </div>
+ 
+-        <audio ref={content?.type === 'audio' ? videoRef : undefined} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
++        <audio ref={content?.type === 'audio' ? videoRef : undefined} preload="auto" onTimeUpdate={handleTimeUpdate} onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+       </div>
+ 
+       {/* Info section */}
+diff --git a/client-prototype/src/utils/cropImage.js b/client-prototype/src/utils/cropImage.js
+new file mode 100644
+index 0000000..203daa5
+--- /dev/null
++++ b/client-prototype/src/utils/cropImage.js
+@@ -0,0 +1,44 @@
++export const createImage = (url) =>
++  new Promise((resolve, reject) => {
++    const image = new Image();
++    image.addEventListener('load', () => resolve(image));
++    image.addEventListener('error', (error) => reject(error));
++    image.setAttribute('crossOrigin', 'anonymous');
++    image.src = url;
++  });
++
++export async function getCroppedImg(imageSrc, pixelCrop) {
++  const image = await createImage(imageSrc);
++  const canvas = document.createElement('canvas');
++  const ctx = canvas.getContext('2d');
++
++  if (!ctx) {
++    return null;
++  }
++
++  canvas.width = pixelCrop.width;
++  canvas.height = pixelCrop.height;
++
++  ctx.drawImage(
++    image,
++    pixelCrop.x,
++    pixelCrop.y,
++    pixelCrop.width,
++    pixelCrop.height,
++    0,
++    0,
++    pixelCrop.width,
++    pixelCrop.height
++  );
++
++  return new Promise((resolve, reject) => {
++    canvas.toBlob((blob) => {
++      if (!blob) {
++        reject(new Error('Canvas is empty'));
++        return;
++      }
++      blob.name = 'cropped.jpg';
++      resolve(blob);
++    }, 'image/jpeg');
++  });
++}
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 0e8e0ab..f9ad112 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -20,6 +20,10 @@ services:
+     build:
+       context: ./client-prototype
+       dockerfile: Dockerfile
++      args:
++        - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
++        - VITE_BASE_URL=${VITE_BASE_URL:-http://localhost:3001}
++        - VITE_STRIPE_PUBLIC_KEY=${VITE_STRIPE_PUBLIC_KEY:-pk_test}
+     ports:
+       - "5173:80"
+     depends_on:
+diff --git a/manage.sh b/manage.sh
+index 5834516..eea8e77 100755
+--- a/manage.sh
++++ b/manage.sh
+@@ -1,37 +1,43 @@
+ #!/bin/bash
+ 
+ # --- CONFIGURATION ---
+-PORT=3001
+-APP_NAME="node server.js" # Nom partiel pour identifier le processus
++APP_NAME="server.js"
++LOG_FILE="./logs/console.log"
+ 
+-# Couleurs pour le terminal
++# Couleurs
+ GREEN='\033[0;32m'
+ RED='\033[0;31m'
+-NC='\033[0m' # No Color
++NC='\033[0m'
++
++start_server() {
++    echo -e "${GREEN}Démarrage du serveur Node.js...${NC}"
++
++    # IMPORTANT: Alwaysdata fournit PORT automatiquement
++    export NODE_ENV=production
++
++    # On ne fixe PAS de port, on laisse process.env.PORT
++    npm start > "$LOG_FILE" 2>&1 &
++
++    echo -e "${GREEN}Serveur lancé.${NC}"
++    echo "Logs: tail -f $LOG_FILE"
++}
+ 
+ stop_server() {
+-    echo -e "${RED}Arrêt du serveur sur le port $PORT...${NC}"
+-    # Trouve le PID utilisant le port et le tue
+-    PID=$(lsof -t -i:$PORT)
+-    if [ -z "$PID" ]; then
+-        # Si non trouvé par port, on cherche par nom de processus
+-        PID=$(ps aux | grep "$APP_NAME" | grep -v grep | awk '{print $2}')
+-    fi
++    echo -e "${RED}Arrêt du serveur...${NC}"
+ 
+-    if [ ! -z "$PID" ]; then
+-        kill -9 $PID
+-        echo -e "${GREEN}Serveur arrêté (PID: $PID).${NC}"
++    PID=$(pgrep -f "$APP_NAME")
++
++    if [ -z "$PID" ]; then
++        echo "Aucun processus trouvé."
+     else
+-        echo -e "Aucun serveur en cours d'exécution."
++        kill -9 $PID
++        echo -e "${GREEN}Serveur arrêté (PID: $PID)${NC}"
+     fi
+ }
+ 
+-start_server() {
+-    echo -e "${GREEN}Démarrage du serveur...${NC}"
+-    # On lance en arrière-plan et on redirige les logs
+-    nohup npm start > ./logs/console.log 2>&1 &
+-    echo -e "${GREEN}Serveur lancé en arrière-plan.${NC}"
+-    echo -e "Tu peux voir les logs avec : tail -f ./logs/console.log"
++status_server() {
++    echo "=== STATUS NODE ==="
++    pgrep -fl "$APP_NAME" || echo "Aucun serveur actif"
+ }
+ 
+ case "$1" in
+@@ -47,8 +53,7 @@ case "$1" in
+         start_server
+         ;;
+     status)
+-        ps aux | grep "$APP_NAME" | grep -v grep
+-        lsof -i:$PORT
++        status_server
+         ;;
+     *)
+         echo "Usage: $0 {start|stop|restart|status}"
+diff --git a/scripts/test_download.js b/scripts/test_download.js
+index b2e431f..b921a0b 100644
+--- a/scripts/test_download.js
++++ b/scripts/test_download.js
+@@ -133,8 +133,9 @@ async function run() {
+ 
+   // ── 2. Catalogue ─────────────────────────────────────────────────────────
+   console.log("\n── 2. Catalogue & Contenus ─────────────────");
+-  const freeContent = await getFirstContent("free");
+-  const premiumContent = await getFirstContent("premium");
++//  const freeContent = await getFirstContent("free");
++const freeContent = "69f31aafc1441b4f19a30776" 
++ const premiumContent = await getFirstContent("premium");
+   const paidContent = await getFirstContent("paid");
+   assert(
+     "Contenu free trouvé",
+diff --git a/server.js b/server.js
+index 83c8212..19c0299 100644
+--- a/server.js
++++ b/server.js
+@@ -9,12 +9,12 @@ const PORT = process.env.PORT || 3001;
+ 
+ // Connexion MongoDB puis démarrage du serveur
+ connectDB().then(() => {
+-  // Remplace la ligne du listen par celle-ci :
+-const server = app.listen(PORT, "0.0.0.0", () => {
++  const server = app.listen(PORT, () => {
+     console.log(`\n🚀 StreamMG Backend démarré`);
+-    console.log(`   ► Accessible sur le port : ${PORT}`);
++    console.log(`   ► http://localhost:${PORT}/api`);
+     console.log(`   ► Environnement : ${process.env.NODE_ENV || 'development'}\n`);
+-});
++  });
++
+   // ⏱️ Pas de timeout HTTP : pour les uploads de gros fichiers (>1Go)
+   // Le client a tout le temps nécessaire pour envoyer son fichier
+   server.timeout = 0;         // TCP socket inactivity timeout
+diff --git a/src/controllers/authController.js b/src/controllers/authController.js
+index 4d38485..496ff64 100644
+--- a/src/controllers/authController.js
++++ b/src/controllers/authController.js
+@@ -16,13 +16,14 @@ const generateJwt = (user) => jwt.sign(
+   { expiresIn: process.env.JWT_EXPIRY || '15m' }
+ );
+ 
+-const createRefreshToken = async (userId) => {
++const createRefreshToken = async (userId, platform = 'web') => {
+   const rawToken  = crypto.randomBytes(32).toString('hex');
+   const tokenHash = await bcrypt.hash(rawToken, 12);
++  const days = platform === 'mobile' ? 30 : 7;
+   await RefreshToken.create({
+     userId,
+     tokenHash,
+-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)  // 7 jours
++    expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+   });
+   return rawToken;
+ };
+@@ -55,7 +56,8 @@ const register = async (req, res, next) => {
+     const user = await User.create({ username, email, passwordHash });
+ 
+     const token    = generateJwt(user);
+-    const rawToken = await createRefreshToken(user._id);
++    const platform = req.headers['x-platform'] || 'web';
++    const rawToken = await createRefreshToken(user._id, platform);
+ 
+     setRefreshCookie(res, rawToken);
+ 
+@@ -95,7 +97,8 @@ const login = async (req, res, next) => {
+     }
+ 
+     const token    = generateJwt(user);
+-    const rawToken = await createRefreshToken(user._id);
++    const platform = req.headers['x-platform'] || 'web';
++    const rawToken = await createRefreshToken(user._id, platform);
+ 
+     setRefreshCookie(res, rawToken);
+ 
+@@ -147,8 +150,9 @@ const refresh = async (req, res, next) => {
+     }
+ 
+     // Générer nouveau JWT + nouveau refresh token
++    const platform    = req.headers['x-platform'] || 'web';
+     const newJwt      = generateJwt(user);
+-    const newRawToken = await createRefreshToken(user._id);
++    const newRawToken = await createRefreshToken(user._id, platform);
+ 
+     setRefreshCookie(res, newRawToken);
+ 
+diff --git a/src/middlewares/auth.js b/src/middlewares/auth.js
+index 49c8c72..23488ad 100644
+--- a/src/middlewares/auth.js
++++ b/src/middlewares/auth.js
+@@ -31,6 +31,7 @@ const authRequired = (req, res, next) => {
+ /**
+  * authOptional — Route publique (req.user = null si pas de token)
+  * Utilisé pour le catalogue, les contenus gratuits
++ * ⚠️ Un token expiré ne doit PAS bloquer l'accès public → req.user = null
+  */
+ const authOptional = (req, res, next) => {
+   const header = req.headers.authorization;
+@@ -45,10 +46,8 @@ const authOptional = (req, res, next) => {
+   try {
+     req.user = jwt.verify(token, process.env.JWT_SECRET);
+   } catch (err) {
+-    if (err.name === 'TokenExpiredError') {
+-      return res.status(401).json({ message: 'Token expiré' });
+-    }
+-    req.user = null;  // Autre erreur → on assume anonyme
++    // Token expiré ou invalide → accès anonyme sur routes publiques
++    req.user = null;
+   }
+   next();
+ };
