@@ -80,10 +80,10 @@ export default function Topbar() {
             flexShrink: 0,
           }}
         >
-          <img 
-            src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png" 
-            alt="StreamMG Logo" 
-            style={{ width: '32px', height: '32px', objectFit: 'contain' }} 
+          <img
+            src="https://i.ibb.co/BKzdqmBw/streammg-logo-mada-1777321847119-trasparent.png"
+            alt="StreamMG Logo"
+            style={{ width: '32px', height: '32px', objectFit: 'contain' }}
           />
           <span className="topbar-logo-text">
             Stream<span style={{ color: 'var(--primary-light)' }}>MG</span>
@@ -191,15 +191,16 @@ export default function Topbar() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              fontSize: '10px',
-              fontWeight: 700,
-              padding: '3px 7px',
-              borderRadius: '5px',
-              background: 'rgba(26,61,110,0.9)',
-              color: 'var(--gold)',
-              border: '1px solid rgba(232,197,71,0.3)',
+              fontSize: '11px',
+              fontWeight: 800,
+              padding: '4px 10px',
+              borderRadius: '6px',
+              background: 'rgba(26,61,110,0.95)',
+              color: '#ffd700',
+              border: '1px solid rgba(232,197,71,0.5)',
               textTransform: 'uppercase',
-              letterSpacing: '0.03em',
+              letterSpacing: '0.05em',
+              boxShadow: '0 0 15px rgba(232,197,71,0.1)',
             }}>
               ★ PREMIUM
             </span>
@@ -209,26 +210,33 @@ export default function Topbar() {
               className="topbar-premium-btn"
               style={{
                 display: 'inline-flex',
-                height: '36px',
-                padding: '0 16px',
-                background: 'linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light))',
-                color: '#1a1000',
-                fontSize: '12px',
-                fontWeight: 700,
+                height: '38px',
+                padding: '0 20px',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
+                color: '#000',
+                fontSize: '13px',
+                fontWeight: 800,
                 borderRadius: '9999px',
-                letterSpacing: '0.03em',
+                letterSpacing: '0.02em',
                 textTransform: 'uppercase',
-                boxShadow: '0 2px 14px rgba(232,197,71,0.35)',
+                boxShadow: '0 4px 15px rgba(255, 165, 0, 0.4)',
                 alignItems: 'center',
-                gap: '5px',
-                transition: 'opacity 180ms, transform 150ms',
+                gap: '6px',
+                transition: 'all 200ms ease',
                 whiteSpace: 'nowrap',
                 textDecoration: 'none',
+                border: 'none',
               }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 165, 0, 0.5)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 165, 0, 0.4)';
+              }}
             >
-              ★ Premium
+              ★ Passer au Premium
             </Link>
           ) : null}
 
@@ -412,6 +420,51 @@ export default function Topbar() {
           </nav>
           <div style={{ padding: '16px', borderTop: '1px solid var(--bg-border)' }}>
             <SearchPill value={search} onChange={setSearch} />
+
+            {user && (
+              <div style={{ marginTop: '14px' }}>
+                {user.isPremium || user.role === 'premium' ? (
+                  <div style={{
+                    padding: '12px',
+                    borderRadius: '12px',
+                    background: 'rgba(26,61,110,0.8)',
+                    color: 'var(--gold)',
+                    border: '1px solid rgba(232,197,71,0.3)',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    ★ Compte Premium
+                  </div>
+                ) : (
+                  <Link
+                    to="/subscribe?type=subscription"
+                    onClick={handleNavClick}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      height: '44px',
+                      background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
+                      color: '#000',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 4px 12px rgba(255, 165, 0, 0.3)',
+                    }}
+                  >
+                    ★ Passer au Premium
+                  </Link>
+                )}
+              </div>
+            )}
+
             {!user && (
               <Link
                 to="/login"

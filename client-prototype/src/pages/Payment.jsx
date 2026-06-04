@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { ArrowLeft, Check, AlertCircle, Lock, Star, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Check, AlertCircle, Lock, Star, ShoppingCart, ShieldCheck } from 'lucide-react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PK || 'pk_test_placeholder');
 
@@ -22,7 +23,7 @@ const CARD_STYLE = {
 };
 
 /* ─── Composant formulaire carte ─── */
-function StripeCardForm({ onPay, loading, amount, label }) {
+function StripeCardForm({ onPay, loading, amount }) {
   const stripe = useStripe();
   const elements = useElements();
   const [cardError, setCardError] = useState(null);
@@ -106,6 +107,7 @@ function SuccessScreen({ message, redirectTo, navigate }) {
 
 /* ─── Page principale ─── */
 const Payment = () => {
+  const { user, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const contentId = searchParams.get('contentId');
@@ -117,17 +119,23 @@ const Payment = () => {
   const [plan, setPlan] = useState('monthly');
   const [succeeded, setSucceeded] = useState(false);
 
+  const isAlreadyPremium = user && (user.isPremium || user.role === 'premium');
+
   useEffect(() => {
     if (type === 'purchase' && contentId) {
       api.get(`/contents/${contentId}`)
         .then(res => setContent(res.data.content))
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setPageLoading(false));
     }
   }, [type, contentId]);
 
   /* ─── Handler abonnement ─── */
   const handleSubscribe = async (stripe, cardEl, setCardError) => {
+    if (isAlreadyPremium) {
+      setCardError("Vous êtes déjà abonné au service Premium.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post('/payment/subscribe', { plan });
@@ -136,7 +144,13 @@ const Payment = () => {
         payment_method: { card: cardEl, billing_details: { name: 'Abonné StreamMG' } },
       });
       if (error) { setCardError(error.message); }
-      else if (paymentIntent.status === 'succeeded') { setSucceeded(true); }
+      else if (paymentIntent.status === 'succeeded') {
+        // Update user status locally
+        if (user) {
+          updateUser({ ...user, isPremium: true, role: 'premium' });
+        }
+        setSucceeded(true);
+      }
     } catch (err) {
       setCardError(err.response?.data?.message || 'Erreur lors du paiement');
     } finally {
@@ -168,6 +182,41 @@ const Payment = () => {
     </div>
   );
 
+  // Si déjà premium et essaie de s'abonner, afficher un écran dédié
+  if (isAlreadyPremium && type === 'subscription' && !succeeded) {
+    return (
+      <div style={{
+        minHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '40px 24px',
+        background: 'radial-gradient(ellipse at top right, rgba(53,132,228,0.07) 0%, transparent 55%), var(--bg-base)'
+      }}>
+        <div style={{ width: '100%', maxWidth: '520px', textAlign: 'center', background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', padding: '48px 32px' }}>
+          <div style={{
+            width: '72px', height: '72px', borderRadius: '50%',
+            background: 'rgba(232,197,71,0.12)', border: '2px solid var(--gold)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px',
+          }}>
+            <ShieldCheck size={36} color="var(--gold)" />
+          </div>
+          <h2 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 700, marginBottom: '10px' }}>Déjà Premium !</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6 }}>
+            Vous bénéficiez déjà de tous les avantages StreamMG Premium. <br />
+            Il n'est pas nécessaire de vous abonner à nouveau.
+          </p>
+          <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button onClick={() => navigate('/')} className="btn btn-primary" style={{ height: '48px', borderRadius: '14px' }}>
+              Retour au catalogue
+            </button>
+            <button onClick={() => navigate('/profile')} style={{ background: 'transparent', border: '1px solid var(--bg-border)', color: 'var(--text-secondary)', height: '48px', borderRadius: '14px', cursor: 'pointer' }}>
+              Voir mon profil
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       minHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -185,8 +234,8 @@ const Payment = () => {
         {type === 'subscription' && (
           succeeded
             ? <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px' }}>
-                <SuccessScreen message="Votre abonnement Premium est maintenant actif. Profitez de tous les contenus !" redirectTo="/profile" navigate={navigate} />
-              </div>
+              <SuccessScreen message="Votre abonnement Premium est maintenant actif. Profitez de tous les contenus !" redirectTo="/profile" navigate={navigate} />
+            </div>
             : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
 
@@ -268,8 +317,8 @@ const Payment = () => {
         {type === 'purchase' && (
           succeeded
             ? <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px' }}>
-                <SuccessScreen message="Vous pouvez regarder ce contenu à tout moment, sans limite !" redirectTo={`/watch/${contentId}`} navigate={navigate} />
-              </div>
+              <SuccessScreen message="Vous pouvez regarder ce contenu à tout moment, sans limite !" redirectTo={`/watch/${contentId}`} navigate={navigate} />
+            </div>
             : (
               <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', overflow: 'hidden' }}>
                 {/* Teal top bar */}

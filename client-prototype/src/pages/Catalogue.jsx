@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
-import { LogIn, Lock } from 'lucide-react';
+import { LogIn, Lock, Star } from 'lucide-react';
 
 /* ── Composants v2 ── */
 import Hero from '../components/Hero';
@@ -31,6 +31,8 @@ const Catalogue = () => {
   const [history, setHistory] = useState([]);
   const [tutorialProgress, setTutorialProgress] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isPremium = user && (user.isPremium || user.role === 'premium');
 
   useEffect(() => {
     loadData();
@@ -136,6 +138,84 @@ const Catalogue = () => {
     </section>
   );
 
+  const PremiumPromo = () => (
+    <section className="premium-promo-banner" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '24px',
+      padding: '24px 28px',
+      borderRadius: '20px',
+      background: 'linear-gradient(135deg, rgba(232,197,71,0.15) 0%, rgba(26,61,110,0.85) 100%)',
+      border: '1px solid rgba(232,197,71,0.3)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Background decoration */}
+      <div style={{
+        position: 'absolute',
+        top: '-20px',
+        right: '-20px',
+        width: '120px',
+        height: '120px',
+        background: 'radial-gradient(circle, rgba(232,197,71,0.15) 0%, transparent 70%)',
+        zIndex: 0,
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '18px', zIndex: 1, minWidth: 0 }}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, var(--gold-dark), var(--gold))',
+          color: '#1a1000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          boxShadow: '0 4px 12px rgba(232,197,71,0.4)',
+        }}>
+          <Star size={24} fill="currentColor" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: "'Sora', sans-serif", fontSize: '18px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>
+            Passez à l'expérience Premium
+          </div>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, maxWidth: '500px' }}>
+            Accédez à tout le catalogue en illimité, sans publicité et en haute qualité. Soutenez vos artistes préférés.
+          </p>
+        </div>
+      </div>
+
+      <Link
+        to="/subscribe?type=subscription"
+        className="btn"
+        style={{
+          height: '46px',
+          padding: '0 24px',
+          borderRadius: '12px',
+          background: '#fff',
+          color: '#1a3d6e',
+          fontWeight: 700,
+          fontSize: '14px',
+          whiteSpace: 'nowrap',
+          textDecoration: 'none',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          zIndex: 1,
+          transition: 'transform 0.2s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        Devenir Premium
+      </Link>
+    </section>
+  );
+
   if (loading) {
     return (
       <div style={{
@@ -172,6 +252,7 @@ const Catalogue = () => {
         gap: '56px',
       }}>
         {!user && <VisitorLoginReminder />}
+        {user && !isPremium && <PremiumPromo />}
 
         {/* ───────────────────────────────────────────────────
             2. CONTINUER À REGARDER

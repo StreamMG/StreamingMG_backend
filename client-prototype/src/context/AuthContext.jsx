@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     // Restaurer l'utilisateur depuis le localStorage
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    
+
     if (storedUser && token) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -31,28 +31,33 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post('/auth/login', { email, password });
       const userData = res.data.user;
       const token = res.data.token;
-      
+
       // Mise à jour du state
       setUser(userData);
-      
+
       // Stockage sécurisé
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', token);
-      
+
       // Stocker le refreshToken pour le renouvellement
       if (res.data.refreshToken) {
         localStorage.setItem('refreshToken', res.data.refreshToken);
       }
-      
+
       // Mettre à jour le header Authorization
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       return { success: true };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Erreur de connexion';
       console.error('Login error:', errorMessage);
       return { success: false, message: errorMessage };
     }
+  };
+
+  const updateUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = async () => {
@@ -92,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

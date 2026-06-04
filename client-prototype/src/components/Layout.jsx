@@ -24,10 +24,20 @@ export default function Layout({ children }) {
 
   // Layout principal de l'app, visible aussi aux visiteurs pour garder l'appel à connexion.
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', paddingBottom: user ? '96px' : 0 }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      position: 'relative',
+      background: 'var(--bg-base)'
+    }}>
       <Topbar />
       
-      <div style={{ flex: 1, paddingTop: '64px' }}>
+      <div style={{ 
+        flex: 1, 
+        paddingTop: '64px',
+        paddingBottom: user ? '96px' : '40px' 
+      }}>
         {children}
       </div>
 
