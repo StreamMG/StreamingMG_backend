@@ -690,7 +690,7 @@ h4 {
   grid-template-columns: 1.8fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 16px;
-  height: 380px;
+  height: 340px;
 }
 
 /* Payment Layouts */

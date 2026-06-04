@@ -12,18 +12,6 @@ import ContentCard from '../components/ContentCard';
 import ContinueCard from '../components/ContinueCard';
 import FeaturedGrid from '../components/FeaturedGrid';
 
-/**
- * Catalogue — Page d'accueil StreamMG v2
- * 
- * 6 sections conformes à la maquette :
- *  1. Hero (full viewport)
- *  2. Continuer à regarder (historique)
- *  3. Musique Traditionnelle (audio, portrait cards)
- *  4. Films & Séries Malagasy (vidéo, wide cards)
- *  5. Tutoriels & Apprentissage (isTutorial, avec progress)
- *  6. Documentaires à la Une (featured grid)
- */
-
 const Catalogue = () => {
   const { user } = useAuth();
   const [featured, setFeatured] = useState([]);
@@ -31,44 +19,40 @@ const Catalogue = () => {
   const [history, setHistory] = useState([]);
   const [tutorialProgress, setTutorialProgress] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rotatedDocs, setRotatedDocs] = useState([]);
 
   const isPremium = user && (user.isPremium || user.role === 'premium');
 
   useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const publicRequests = [
+          api.get('/contents/featured').catch(() => ({ data: { featured: [] } })),
+          api.get('/contents?limit=50').catch(() => ({ data: { contents: [] } })),
+        ];
+        const [featuredRes, allRes] = await Promise.all(publicRequests);
+        setFeatured(featuredRes.data.featured || []);
+        setContents(allRes.data.contents || []);
+
+        if (user) {
+          const privateRequests = [
+            api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
+            api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
+          ];
+          const [historyRes, progressRes] = await Promise.all(privateRequests);
+          setHistory(historyRes.data.history || []);
+          setTutorialProgress(progressRes.data.inProgress || []);
+        }
+      } catch (err) {
+        console.error('Erreur chargement données:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadData();
   }, [user?._id]);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // 1. Données publiques
-      const publicRequests = [
-        api.get('/contents/featured').catch(() => ({ data: { featured: [] } })),
-        api.get('/contents?limit=50').catch(() => ({ data: { contents: [] } })),
-      ];
-
-      const [featuredRes, allRes] = await Promise.all(publicRequests);
-      setFeatured(featuredRes.data.featured || []);
-      setContents(allRes.data.contents || []);
-
-      // 2. Données privées (uniquement si connecté)
-      if (user) {
-        const privateRequests = [
-          api.get('/history?limit=10').catch(() => ({ data: { history: [] } })),
-          api.get('/tutorial/progress').catch(() => ({ data: { inProgress: [] } })),
-        ];
-        const [historyRes, progressRes] = await Promise.all(privateRequests);
-        setHistory(historyRes.data.history || []);
-        setTutorialProgress(progressRes.data.inProgress || []);
-      }
-    } catch (err) {
-      console.error('Erreur chargement données:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Filtres de contenu ──
   const audios = contents.filter(c => c.type === 'audio');
   const videos = contents.filter(c => c.type === 'video');
   const tutorials = contents.filter(c => c.isTutorial);
@@ -76,11 +60,25 @@ const Catalogue = () => {
     c.category === 'documentaire' || c.category === 'film'
   );
 
-  // ── Hero data ──
+  useEffect(() => {
+    setRotatedDocs(docs);
+    if (docs.length <= 3) return;
+
+    const interval = setInterval(() => {
+      setRotatedDocs(prevDocs => {
+        const newDocs = [...prevDocs];
+        const first = newDocs.shift();
+        newDocs.push(first);
+        return newDocs;
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [docs]);
+
   const mainFeatured = featured.length > 0 ? featured[0] : (contents.length > 0 ? contents[0] : null);
   const sideFeatured = featured.length > 1 ? featured.slice(1, 4) : contents.slice(1, 4);
 
-  // ── Progress helper ──
   const getProgressForTutorial = (tutorialId) => {
     const p = tutorialProgress.find(tp =>
       (tp.contentId?._id || tp.contentId) === tutorialId
@@ -232,17 +230,11 @@ const Catalogue = () => {
 
   return (
     <>
-      {/* ═══════════════════════════════════════════════════════
-          1. HERO — Full viewport
-          ═══════════════════════════════════════════════════════ */}
       <Hero
         mainContent={mainFeatured}
         sideContents={sideFeatured}
       />
 
-      {/* ═══════════════════════════════════════════════════════
-          MAIN CONTENT
-          ═══════════════════════════════════════════════════════ */}
       <main style={{
         maxWidth: '1480px',
         margin: '0 auto',
@@ -254,9 +246,6 @@ const Catalogue = () => {
         {!user && <VisitorLoginReminder />}
         {user && !isPremium && <PremiumPromo />}
 
-        {/* ───────────────────────────────────────────────────
-            2. CONTINUER À REGARDER
-            ─────────────────────────────────────────────────── */}
         {history.length > 0 && (
           <section className="animate-fade-in">
             <SectionHeader
@@ -272,9 +261,6 @@ const Catalogue = () => {
           </section>
         )}
 
-        {/* ───────────────────────────────────────────────────
-            3. MUSIQUE TRADITIONNELLE — portrait cards
-            ─────────────────────────────────────────────────── */}
         {audios.length > 0 && (
           <section className="animate-fade-in">
             <SectionHeader
@@ -295,9 +281,6 @@ const Catalogue = () => {
           </section>
         )}
 
-        {/* ───────────────────────────────────────────────────
-            4. FILMS & SÉRIES MALAGASY — wide cards
-            ─────────────────────────────────────────────────── */}
         {videos.length > 0 && (
           <section className="animate-fade-in">
             <SectionHeader
@@ -318,9 +301,6 @@ const Catalogue = () => {
           </section>
         )}
 
-        {/* ───────────────────────────────────────────────────
-            5. TUTORIELS & APPRENTISSAGE — cards avec progress
-            ─────────────────────────────────────────────────── */}
         {tutorials.length > 0 && (
           <section className="animate-fade-in">
             <SectionHeader
@@ -342,21 +322,17 @@ const Catalogue = () => {
           </section>
         )}
 
-        {/* ───────────────────────────────────────────────────
-            6. DOCUMENTAIRES À LA UNE — featured grid
-            ─────────────────────────────────────────────────── */}
-        {docs.length >= 3 && (
+        {rotatedDocs.length >= 3 && (
           <section className="animate-fade-in">
             <SectionHeader
               label="À ne pas manquer"
               title="Documentaires à la Une"
               sub="Explorez Madagascar en profondeur"
             />
-            <FeaturedGrid items={docs.slice(0, 3)} />
+            <FeaturedGrid items={rotatedDocs.slice(0, 3)} />
           </section>
         )}
 
-        {/* ── Fallback si aucun contenu ── */}
         {contents.length === 0 && (
           <div style={{
             textAlign: 'center',
