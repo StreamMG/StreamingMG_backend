@@ -21,7 +21,7 @@ const Register = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.username) newErrors.username = 'Nom d'utilisateur requis';
+    if (!formData.username) newErrors.username = 'Nom d\'utilisateur requis';
     else if (formData.username.length < 3) newErrors.username = 'Minimum 3 caractères';
     else if (formData.username.length > 30) newErrors.username = 'Maximum 30 caractères';
     
