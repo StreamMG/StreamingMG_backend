@@ -7,9 +7,11 @@ import {
   ChevronRight
 } from 'lucide-react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 export default function VideoPlayerEnhanced() {
   const { id } = useParams();
+  const { user } = useAuth();
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const hlsRef = useRef(null);
@@ -123,6 +125,16 @@ export default function VideoPlayerEnhanced() {
     try {
       const res = await api.get(`/contents/${id}`);
       setContent(res.data.content);
+      
+      // Vérifier l'accès pour les visiteurs non connectés
+      if (!user && (res.data.content.accessType === 'premium' || res.data.content.accessType === 'paid')) {
+        setAccessError({
+          reason: res.data.content.accessType === 'premium' ? 'subscription_required' : 'purchase_required',
+          price: res.data.content.price
+        });
+        return;
+      }
+      
       api.post(`/contents/${id}/view`).catch(() => { });
     } catch (err) {
       if (err.response?.status === 403) setAccessError(err.response.data);
@@ -130,7 +142,7 @@ export default function VideoPlayerEnhanced() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user]);
 
   const initPlayer = useCallback(async () => {
     try {
@@ -278,30 +290,59 @@ export default function VideoPlayerEnhanced() {
   );
 
   if (accessError) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', padding: '24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: '440px', background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', padding: '48px 40px' }}>
-        <div style={{ width: '72px', height: '72px', borderRadius: '20px', background: 'rgba(237,51,59,0.1)', border: '1px solid rgba(237,51,59,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: '32px' }}>🔒</div>
-        <h2 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>Contenu protégé</h2>
-        {accessError.reason === 'subscription_required' && (
-          <>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '28px', lineHeight: '1.6' }}>Ce contenu nécessite un abonnement Premium.</p>
-            <Link to="/subscribe" className="btn btn-primary" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}><Star size={18} /> Souscrire au Premium</Link>
-          </>
-        )}
-        {accessError.reason === 'purchase_required' && (
-          <>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.6' }}>Ce contenu est disponible à l'achat.</p>
-            <p style={{ fontFamily: 'Sora', fontSize: '28px', fontWeight: 800, color: 'var(--teal)', marginBottom: '28px' }}>{accessError.price / 1000}k Ar</p>
-            <Link to={`/purchase?contentId=${id}&type=purchase`} className="btn btn-teal" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}><ShoppingCart size={18} /> Acheter ce contenu</Link>
-          </>
-        )}
-        {accessError.reason === 'login_required' && (
-          <>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '28px' }}>Connectez-vous pour accéder.</p>
-            <Link to="/login" className="btn btn-primary" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}>Se connecter</Link>
-          </>
-        )}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '16px', fontSize: '13px', color: 'var(--text-muted)' }}><ArrowLeft size={14} /> Retour au catalogue</Link>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 32px' }}>
+      <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}><ArrowLeft size={16} /> Retour au catalogue</Link>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '32px', alignItems: 'start' }}>
+        {/* Content details */}
+        <div>
+          {content && (
+            <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                {content.accessType === 'premium' && <span className="badge badge-premium" style={{ padding: '4px 10px', fontSize: '11px' }}>★ Premium</span>}
+                {content.accessType === 'paid' && <span className="badge badge-paid" style={{ padding: '4px 10px', fontSize: '11px' }}>{content.price / 1000}k Ar</span>}
+                <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>{content.category}</span>
+                <span style={{ fontSize: '14px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={14} /> {formatTime(content.duration)}</span>
+              </div>
+              <h1 style={{ fontFamily: 'Sora', fontSize: '32px', fontWeight: 800, marginBottom: '16px', lineHeight: 1.2, letterSpacing: '-0.02em' }}>{content.title}</h1>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', fontSize: '16px', maxWidth: '800px' }}>{content.description}</p>
+              {content.artist && (
+                <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white' }}>{content.artist.substring(0, 1)}</div>
+                  <div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{content.artist}</div>
+                    {content.album && <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{content.album}</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Access gate */}
+        <div style={{ textAlign: 'center', background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: '24px', padding: '48px 40px' }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '20px', background: 'rgba(237,51,59,0.1)', border: '1px solid rgba(237,51,59,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: '32px' }}>🔒</div>
+          <h2 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>Contenu protégé</h2>
+          {accessError.reason === 'subscription_required' && (
+            <>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '28px', lineHeight: '1.6' }}>Ce contenu nécessite un abonnement Premium pour être lu.</p>
+              <Link to="/subscribe" className="btn btn-primary" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}><Star size={18} /> Souscrire au Premium</Link>
+            </>
+          )}
+          {accessError.reason === 'purchase_required' && (
+            <>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: '1.6' }}>Ce contenu est disponible à l'achat.</p>
+              <p style={{ fontFamily: 'Sora', fontSize: '28px', fontWeight: 800, color: 'var(--teal)', marginBottom: '28px' }}>{accessError.price / 1000}k Ar</p>
+              <Link to={`/purchase?contentId=${id}&type=purchase`} className="btn btn-teal" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}><ShoppingCart size={18} /> Acheter ce contenu</Link>
+            </>
+          )}
+          {accessError.reason === 'login_required' && (
+            <>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '28px' }}>Connectez-vous pour accéder à ce contenu.</p>
+              <Link to="/login" className="btn btn-primary" style={{ width: '100%', height: '48px', borderRadius: '12px', justifyContent: 'center' }}>Se connecter</Link>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

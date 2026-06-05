@@ -746,6 +746,11 @@ h4 {
   .player-info-grid p {
     font-size: 14px !important;
   }
+
+  /* Responsive access gate */
+  .player-wrapper[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* Responsive grid for FeaturedGrid */
