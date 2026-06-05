@@ -126,13 +126,49 @@ export default function VideoPlayerEnhanced() {
       const res = await api.get(`/contents/${id}`);
       setContent(res.data.content);
       
-      // Vérifier l'accès pour les visiteurs non connectés
-      if (!user && (res.data.content.accessType === 'premium' || res.data.content.accessType === 'paid')) {
-        setAccessError({
-          reason: res.data.content.accessType === 'premium' ? 'subscription_required' : 'purchase_required',
-          price: res.data.content.price
-        });
-        return;
+      // Vérifier l'accès selon la documentation API
+      // - free : accessible à tous, sans compte
+      // - premium : abonnement Premium requis
+      // - paid : achat unitaire requis (indépendant de l'abonnement)
+      if (res.data.content.accessType === 'premium' || res.data.content.accessType === 'paid') {
+        // Vérifier si l'utilisateur est connecté
+        if (!user) {
+          setAccessError({
+            reason: 'login_required'
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Vérifier si l'utilisateur a les droits Premium
+        if (res.data.content.accessType === 'premium' && !user.isPremium) {
+          setAccessError({
+            reason: 'subscription_required'
+          });
+          setLoading(false);
+          return;
+        }
+        
+        // Pour les contenus payants, vérifier si l'utilisateur a acheté
+        if (res.data.content.accessType === 'paid') {
+          try {
+            const purchasesRes = await api.get('/payment/purchases');
+            const hasPurchased = purchasesRes.data.purchases.some(
+              (p) => p.contentId._id === id
+            );
+            if (!hasPurchased) {
+              setAccessError({
+                reason: 'purchase_required',
+                price: res.data.content.price
+              });
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            // Si erreur de récupération des achats, autoriser quand même (éviter blocage)
+            console.warn('Erreur vérification achats:', err);
+          }
+        }
       }
       
       api.post(`/contents/${id}/view`).catch(() => { });
